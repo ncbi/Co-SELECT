@@ -1,6 +1,6 @@
 # Co-SELECT
 
-The Co-SELECT pipeline uses `doit` to automate repetitive tasks of analyzing sequencing data on multiple rounds (alternatively cycles used in many of the scripts) of multiple TF experiments. It would be good to have a basic knowledge of the software, and obviously, it should be installed.
+The Co-SELECT pipeline uses pyhton based [doit](http://pydoit.org/contents.html) software to automate repetitive tasks of analyzing sequencing data on multiple rounds (alternatively cycles used in many of the scripts) of multiple TF experiments. It would be good to have a basic knowledge of the software, and obviously, it should be installed.
 
 ## Directory structure
 
