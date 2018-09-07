@@ -20,8 +20,14 @@ The subdirectory `src` also contain the following files which are essential:
 
 ## Downloading the dataset
 
-The example script `dodo_downloads.py` can be used for downloading all the experiments.
-    > Downloading all the datasets will require 136G disk space
+The example script `dodo_downloads.py` can be used for downloading all the experiments. Note that downloading all the datasets will require 136G disk space.
+```
+$ doit -f dodo_downloads.py
+```
+The download can be made faster using multiple processes say `n=10` as follows
+```
+$ doit -n 10 -f dodo_downloads.py
+```
 
 ## Preprocessing the round 0 datasets
 
