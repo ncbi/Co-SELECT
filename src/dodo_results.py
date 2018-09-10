@@ -104,6 +104,24 @@ def task_get_cross_summary():
               'clean'     : True,
             }
 
+def task_same_enriched():
+  for en_th in en_thresholds:
+      for lflank, rflank in flank_configs:
+        for shape_type in shapes:
+          for levels_type in discrete_levels_type:
+            inputs = ['/'.join([top_results_dir, levels_type, en_th, task.family, task.tf, task.primer, '.'.join(['enriched', task.tf, task.primer, shape_type, str(task.cycles[0]), motif, str(lflank), str(rflank), 'csv'])]) for task in task_infos for motif, dist in izip(task.motifs, task.distances)]
+            infos = [(task.tf, task.primer, task.family, task.tf, task.primer, task.family) for task in task_infos for motif, dist in izip(task.motifs, task.distances)]
+            target = '%s/%s/%s/denriched_%s.%s.l%d.r%d.csv' % (top_results_dir, levels_type, en_th, 'same', shape_type, lflank, rflank)
+            yield {
+              'name'      : target,
+              #'actions'   : ["results_scripts/fisher.R %s %s %s %d %d %s" % (shape_type, en_th, 'same', lflank, rflank, levels_type)],
+              'actions'   : [(combine_data_frames, [inputs, infos, target])],
+              'file_dep'  : inputs,
+              'targets'   : [target],
+              'clean'     : True,
+            }
+
+
 def task_same_fisher():
   for en_th in en_thresholds:
       for lflank, rflank in flank_configs:
@@ -202,3 +220,5 @@ def task_plot_qvalues():
       'targets'   : [selected_pdf, separate_pdf, combined_pdf],
       'clean'     : True,
     }
+
+

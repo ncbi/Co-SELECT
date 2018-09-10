@@ -278,130 +278,130 @@ getCrossSummary <-function(top_data_dir, top_res_dir, tf1, primer1, family1, mot
 
   write.csv(dfisher, file=path_fisher, row.names=FALSE)
 
-  print(path_fisher)
+  #print(path_fisher)
   #return(dfisher)
 }
 
 
-getSameFisherName <- function(tfs, config, shape) {
-  file <- paste('fisher', tfs$tf[1], tfs$primer[1], shape, tfs$final[1], tfs$motif[1], config$lf[1], config$rf[1], 'csv', sep='.')
-  path <- paste(getTopResFamilyDir(tfs$family[1]), tfs$tf[1], tfs$primer[1], file, sep='/')
-  return(path)
-}
-
-getCrossFisherName <- function(cross, config, shape) {
-  file <- paste('fisher', cross$tf.x[1], cross$primer.x[1], cross$motif.x[1], cross$final.x[1], cross$tf.y[1], cross$primer.y[1], cross$motif.y[1], cross$final.y[1],
-                    shape, config$lf[1], config$rf[1], 'csv', sep='.')
-  print(file)
-  path <- paste(getTopResPairDir(cross$family.x[1], cross$family.y[1]), file, sep='/')
-  return(path)
-}
-
-readSameFisher <- function(tfs, config, shape) {
-  file <- getSameFisherName(tfs, config, shape)
-  #print(file)
-  dfisher <- read.csv(file, stringsAsFactors=FALSE)
-  return(dfisher)
-}
-
-readCrossFisher <- function(tfs, config, shape) {
-  file <- getCrossFisherName(tfs, config, shape)
-  #print(file)
-  dfisher <- read.csv(file, stringsAsFactors=FALSE)
-  return(dfisher)
-}
-
-getCrossFisherTableName <- function(shape, config) {
-  file <- paste('dfisher_cross', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
-  path <- paste(TOP_RES_DIR, file, sep='/')
-  return(path)
-}
-
-getSameFisherTableName <- function(shape, config) {
-  file <- paste('dfisher_same', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
-  path <- paste(TOP_RES_DIR, file, sep='/')
-  return(path)
-}
-
-writeCrossFisherTable <- function(df, shape, config) {
-  file <- getCrossFisherTableName(shape, config)
-  write.csv(df, file=file, row.names=FALSE)
-}
-
-writeSameFisherTable <- function(df, shape, config) {
-  file <- getSameFisherTableName(shape, config)
-  write.csv(df, file=file, row.names=FALSE)
-}
-
-readCrossFisherTable <- function(shape, config) {
-  file <- getCrossFisherTableName(shape, config)
-  return(read.csv(file, stringsAsFactors=FALSE))
-}
-
-readSameFisherTable <- function(shape, config) {
-  file <- getSameFisherTableName(shape, config)
-  return(read.csv(file, stringsAsFactors=FALSE))
-}
-
-
-
-
-getSameEnrichedName <- function(tfs, config, shape) {
-  file <- paste('enriched', tfs$tf[1], tfs$primer[1], shape, tfs$final[1], tfs$motif[1], config$lf[1], config$rf[1], 'csv', sep='.')
-  path <- paste(getTopResFamilyDir(tfs$family[1]), tfs$tf[1], tfs$primer[1], file, sep='/')
-  return(path)
-}
-
-getCrossEnrichedName <- function(cross, config, shape) {
-  file <- paste('enriched', cross$tf.x[1], cross$primer.x[1], cross$motif.x[1], cross$final.x[1], cross$tf.y[1], cross$primer.y[1], cross$motif.y[1], cross$final.y[1],
-                    shape, config$lf[1], config$rf[1], 'csv', sep='.')
-  path <- paste(getTopResPairDir(cross$family.x[1], cross$family.y[1]), file, sep='/')
-  return(path)
-}
-
-readSameEnriched <- function(tfs, config, shape) {
-  file <- getSameEnrichedName(tfs, config, shape)
-  denriched <- read.csv(file, stringsAsFactors=FALSE)
-  names(denriched)[names(denriched) == paste0('label', tfs$fina[1])] <- 'label'
-  return(denriched)
-}
-
-readCrossEnriched <- function(tfs, config, shape) {
-  file <- getCrossEnrichedName(tfs, config, shape)
-  #print(file)
-  denriched <- read.csv(file, stringsAsFactors=FALSE)
-  return(denriched)
-}
-
-getCrossEnrichedTableName <- function(shape, config) {
-  file <- paste('denriched_cross', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
-  path <- paste(TOP_RES_DIR, file, sep='/')
-  return(path)
-}
-
-getSameEnrichedTableName <- function(shape, config) {
-  file <- paste('denriched_same', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
-  path <- paste(TOP_RES_DIR, file, sep='/')
-  return(path)
-}
-
-writeCrossEnrichedTable <- function(df, shape, config) {
-  file <- getCrossEnrichedTableName(shape, config)
-  write.csv(df, file=file, row.names=FALSE)
-}
-
-writeSameEnrichedTable <- function(df, shape, config) {
-  file <- getSameEnrichedTableName(shape, config)
-  print(file)
-  write.csv(df, file=file, row.names=FALSE)
-}
-
-readCrossEnrichedTable <- function(shape, config) {
-  file <- getCrossEnrichedTableName(shape, config)
-  return(read.csv(file, stringsAsFactors=FALSE))
-}
-
-readSameEnrichedTable <- function(shape, config) {
-  file <- getSameEnrichedTableName(shape, config)
-  return(read.csv(file, stringsAsFactors=FALSE))
-}
+#getSameFisherName <- function(tfs, config, shape) {
+#  file <- paste('fisher', tfs$tf[1], tfs$primer[1], shape, tfs$final[1], tfs$motif[1], config$lf[1], config$rf[1], 'csv', sep='.')
+#  path <- paste(getTopResFamilyDir(tfs$family[1]), tfs$tf[1], tfs$primer[1], file, sep='/')
+#  return(path)
+#}
+#
+#getCrossFisherName <- function(cross, config, shape) {
+#  file <- paste('fisher', cross$tf.x[1], cross$primer.x[1], cross$motif.x[1], cross$final.x[1], cross$tf.y[1], cross$primer.y[1], cross$motif.y[1], cross$final.y[1],
+#                    shape, config$lf[1], config$rf[1], 'csv', sep='.')
+#  print(file)
+#  path <- paste(getTopResPairDir(cross$family.x[1], cross$family.y[1]), file, sep='/')
+#  return(path)
+#}
+#
+#readSameFisher <- function(tfs, config, shape) {
+#  file <- getSameFisherName(tfs, config, shape)
+#  #print(file)
+#  dfisher <- read.csv(file, stringsAsFactors=FALSE)
+#  return(dfisher)
+#}
+#
+#readCrossFisher <- function(tfs, config, shape) {
+#  file <- getCrossFisherName(tfs, config, shape)
+#  #print(file)
+#  dfisher <- read.csv(file, stringsAsFactors=FALSE)
+#  return(dfisher)
+#}
+#
+#getCrossFisherTableName <- function(shape, config) {
+#  file <- paste('dfisher_cross', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
+#  path <- paste(TOP_RES_DIR, file, sep='/')
+#  return(path)
+#}
+#
+#getSameFisherTableName <- function(shape, config) {
+#  file <- paste('dfisher_same', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
+#  path <- paste(TOP_RES_DIR, file, sep='/')
+#  return(path)
+#}
+#
+#writeCrossFisherTable <- function(df, shape, config) {
+#  file <- getCrossFisherTableName(shape, config)
+#  write.csv(df, file=file, row.names=FALSE)
+#}
+#
+#writeSameFisherTable <- function(df, shape, config) {
+#  file <- getSameFisherTableName(shape, config)
+#  write.csv(df, file=file, row.names=FALSE)
+#}
+#
+#readCrossFisherTable <- function(shape, config) {
+#  file <- getCrossFisherTableName(shape, config)
+#  return(read.csv(file, stringsAsFactors=FALSE))
+#}
+#
+#readSameFisherTable <- function(shape, config) {
+#  file <- getSameFisherTableName(shape, config)
+#  return(read.csv(file, stringsAsFactors=FALSE))
+#}
+#
+#
+#
+#
+#getSameEnrichedName <- function(tfs, config, shape) {
+#  file <- paste('enriched', tfs$tf[1], tfs$primer[1], shape, tfs$final[1], tfs$motif[1], config$lf[1], config$rf[1], 'csv', sep='.')
+#  path <- paste(getTopResFamilyDir(tfs$family[1]), tfs$tf[1], tfs$primer[1], file, sep='/')
+#  return(path)
+#}
+#
+#getCrossEnrichedName <- function(cross, config, shape) {
+#  file <- paste('enriched', cross$tf.x[1], cross$primer.x[1], cross$motif.x[1], cross$final.x[1], cross$tf.y[1], cross$primer.y[1], cross$motif.y[1], cross$final.y[1],
+#                    shape, config$lf[1], config$rf[1], 'csv', sep='.')
+#  path <- paste(getTopResPairDir(cross$family.x[1], cross$family.y[1]), file, sep='/')
+#  return(path)
+#}
+#
+#readSameEnriched <- function(tfs, config, shape) {
+#  file <- getSameEnrichedName(tfs, config, shape)
+#  denriched <- read.csv(file, stringsAsFactors=FALSE)
+#  names(denriched)[names(denriched) == paste0('label', tfs$fina[1])] <- 'label'
+#  return(denriched)
+#}
+#
+#readCrossEnriched <- function(tfs, config, shape) {
+#  file <- getCrossEnrichedName(tfs, config, shape)
+#  #print(file)
+#  denriched <- read.csv(file, stringsAsFactors=FALSE)
+#  return(denriched)
+#}
+#
+#getCrossEnrichedTableName <- function(shape, config) {
+#  file <- paste('denriched_cross', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
+#  path <- paste(TOP_RES_DIR, file, sep='/')
+#  return(path)
+#}
+#
+#getSameEnrichedTableName <- function(shape, config) {
+#  file <- paste('denriched_same', shape, paste0('l', config$lf[1]), paste0('r', config$rf[1]), 'csv', sep='.')
+#  path <- paste(TOP_RES_DIR, file, sep='/')
+#  return(path)
+#}
+#
+#writeCrossEnrichedTable <- function(df, shape, config) {
+#  file <- getCrossEnrichedTableName(shape, config)
+#  write.csv(df, file=file, row.names=FALSE)
+#}
+#
+#writeSameEnrichedTable <- function(df, shape, config) {
+#  file <- getSameEnrichedTableName(shape, config)
+#  print(file)
+#  write.csv(df, file=file, row.names=FALSE)
+#}
+#
+#readCrossEnrichedTable <- function(shape, config) {
+#  file <- getCrossEnrichedTableName(shape, config)
+#  return(read.csv(file, stringsAsFactors=FALSE))
+#}
+#
+#readSameEnrichedTable <- function(shape, config) {
+#  file <- getSameEnrichedTableName(shape, config)
+#  return(read.csv(file, stringsAsFactors=FALSE))
+#}
