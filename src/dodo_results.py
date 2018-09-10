@@ -1,37 +1,76 @@
 from dodo_common import *
 
-topresdir = '/panfs/pan1/aptax/results'
+
+
+task_infos = []
+
+for i, row in tfs.iterrows():
+  tf = row['tf']
+  bc = row['primer']
+  cycles = [row['final']] #[4] #[int(x) for x in row['cycles'].split(';')]
+  #cycles = [1,2,3,4]
+  motif = row['motif']
+  family = row['family']
+  dist = row['distance']
+  accession = row['accession']
+  task_infos.append(TaskInfo(tf, bc, family, accession, [motif], cycles, [dist]))
 
 tmp = tfs[['family', 'tf', 'primer', 'motif', 'distance', 'final']]
 cross = pd.merge(tmp, tmp, on=tmp.assign(key_col=1)['key_col'])
 cross = cross.loc[cross['family_x'] != cross['family_y']]
 #cross = cross.loc[~(((cross['family_x'] == 'homeodomain') & (cross['family_y'] == 'ETS')) | ((cross['family_y'] == 'homeodomain') & (cross['family_x'] == 'ETS')))]
 
-#nonzero_task_infos = nonzero_task_infos[0:1]
-#cross = cross.head(1)
-#print cross
 
 print en_thresholds
+
+def combine_data_frames(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (tf1, primer1, family1, tf2, primer2, family2) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['tf.x'] = tf1
+    tmp['primer.x'] = primer1
+    tmp['family.x'] = family1
+    tmp['tf.y'] = tf2
+    tmp['primer.y'] = primer2
+    tmp['family.y'] = family2
+    df = df.append(tmp, ignore_index=True)
+  print df
+  df.to_csv(outfile, index=False)
+
+
+def combine_qvalues(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (en_th, shape_type, levels_type, family, ctx) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['en_th'] = en_th
+    tmp['shape'] = shape_type
+    tmp['levels_type'] = levels_type
+    tmp['family'] = family
+    tmp['ctx'] = ctx
+    df = df.append(tmp, ignore_index=True)
+  print df
+  df.to_csv(outfile, index=False)
 
 def task_get_summary():
   """ Get summary information for enrichment """
   for en_th in en_thresholds:
-    for task in nonzero_task_infos:
+    for task in task_infos:
       for lflank, rflank in flank_configs:
         for shape_type in shapes:
           for levels_type in discrete_levels_type:
             shinfo = shape_info[levels_type][shape_type]
             shape_levels_str = shinfo.getLevelsStr()
             for cycle in task.cycles:
+              print en_th, task.tf, cycle
               for motif, dist in izip(task.motifs, task.distances):
                   input_files = [top_data_dir +'/'+ task.tf_info.getContextedShapemerCountFile(cycle, motif, dist, lflank, rflank, ctx, shape_type, shape_levels_str) for ctx in contexts]
-                  resdir = '/'.join([topresdir, levels_type, en_th, task.family, task.tf, task.primer])
+                  resdir = '/'.join([top_results_dir, levels_type, en_th, task.family, task.tf, task.primer])
                   file_fisher = '.'.join(['fisher', task.tf, task.primer, shape_type, str(cycle), motif, str(lflank), str(rflank), 'csv'])
                   output_file = '/'.join([resdir, file_fisher])
-                  prob_files = [getCycle0ProbFile(ctx, shape_type, motif, dist, lflank, rflank, shape_levels_str) for ctx in contexts]
+                  prob_files = [getCycle0ProbFile(top_data_dir, ctx, shape_type, motif, dist, lflank, rflank, shape_levels_str) for ctx in contexts]
                   yield {
                     'name'      : output_file,
-                    'actions'   : ["../scripts/get_summary.R %s %s %d %s %s %d %d %d %s %s %s" % (task.tf, task.primer, cycle, shape_type, motif, dist, lflank, rflank, en_th, resdir, shape_levels_str)],
+                    'actions'   : ["results_scripts/get_summary.R %s %s %d %s %s %d %d %d %s %s %s %s" % (task.tf, task.primer, cycle, shape_type, motif, dist, lflank, rflank, en_th, resdir, shape_levels_str, task.family)],
                     'file_dep'  : input_files + prob_files,
                     'targets'   : [output_file],
                     'clean'     : True,
@@ -48,18 +87,18 @@ def task_get_cross_summary():
           for levels_type in discrete_levels_type:
             shinfo = shape_info[levels_type][shape_type]
             shape_levels_str = shinfo.getLevelsStr()
-            resdir = '%s/%s/%s/%s_%s' % (topresdir, levels_type, en_th, min(family1, family2), max(family1, family2))
-            info1 = TFInfo(tf1, primer1)
-            info2 = TFInfo(tf2, primer2)
+            resdir = '%s/%s/%s/%s_%s' % (top_results_dir, levels_type, en_th, min(family1, family2), max(family1, family2))
+            info1 = TFInfo(tf1, primer1, family1)
+            info2 = TFInfo(tf2, primer2, family2)
             input_files = [top_data_dir +'/'+ info1.getContextedShapemerCountFile(int(cycle1), motif1, int(dist1), lflank, rflank, 'fg', shape_type, shape_levels_str)]
             input_files += [top_data_dir +'/'+ info2.getContextedShapemerCountFile(int(cycle2), motif2, int(dist2), lflank, rflank, 'bg', shape_type, shape_levels_str)]
             file_fisher = '.'.join(['fisher', tf1, primer1, motif1, str(cycle1), tf2, primer2, motif2, str(cycle2), shape_type, str(lflank), str(rflank), 'csv'])
             output_file = '/'.join([resdir, file_fisher])
-            prob_files = [getCycle0ProbFile('fg', shape_type, motif1, dist1, lflank, rflank, shape_levels_str)]
-            prob_files += [getCycle0ProbFile('bg', shape_type, motif2, dist2, lflank, rflank, shape_levels_str)]
+            prob_files = [getCycle0ProbFile(top_data_dir, 'fg', shape_type, motif1, dist1, lflank, rflank, shape_levels_str)]
+            prob_files += [getCycle0ProbFile(top_data_dir, 'bg', shape_type, motif2, dist2, lflank, rflank, shape_levels_str)]
             yield {
               'name'      : output_file,
-              'actions'   : ["../scripts/get_cross_summary.R %s %s %s %d %d %s %s %s %d %d %s %d %d %s %s %s" % (tf1, primer1, motif1, dist1, cycle1, tf2, primer2, motif2, dist2, cycle2, shape_type, lflank, rflank, en_th, resdir, shape_levels_str)],
+              'actions'   : ["results_scripts/get_cross_summary.R %s %s %s %s %d %d %s %s %s %s %d %d %s %d %d %s %s %s" % (tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape_type, lflank, rflank, en_th, resdir, shape_levels_str)],
               'file_dep'  : input_files + prob_files,
               'targets'   : [output_file],
               'clean'     : True,
@@ -70,13 +109,13 @@ def task_same_fisher():
       for lflank, rflank in flank_configs:
         for shape_type in shapes:
           for levels_type in discrete_levels_type:
-            shinfo = shape_info[levels_type][shape_type]
-            shape_levels_str = shinfo.getLevelsStr()
-            inputs = ['/'.join([topresdir, levels_type, en_th, task.family, task.tf, task.primer, '.'.join(['fisher', task.tf, task.primer, shape_type, str(task.cycles[0]), motif, str(lflank), str(rflank), 'csv'])]) for task in nonzero_task_infos for motif, dist in izip(task.motifs, task.distances)]
-            target = '%s/%s/%s/dfisher_%s.%s.l%d.r%d.csv' % (topresdir, levels_type, en_th, 'same', shape_type, lflank, rflank)
+            inputs = ['/'.join([top_results_dir, levels_type, en_th, task.family, task.tf, task.primer, '.'.join(['fisher', task.tf, task.primer, shape_type, str(task.cycles[0]), motif, str(lflank), str(rflank), 'csv'])]) for task in task_infos for motif, dist in izip(task.motifs, task.distances)]
+            infos = [(task.tf, task.primer, task.family, task.tf, task.primer, task.family) for task in task_infos for motif, dist in izip(task.motifs, task.distances)]
+            target = '%s/%s/%s/dfisher_%s.%s.l%d.r%d.csv' % (top_results_dir, levels_type, en_th, 'same', shape_type, lflank, rflank)
             yield {
               'name'      : target,
-              'actions'   : ["../scripts/fisher.R %s %s %s %d %d %s" % (shape_type, en_th, 'same', lflank, rflank, levels_type)],
+              #'actions'   : ["results_scripts/fisher.R %s %s %s %d %d %s" % (shape_type, en_th, 'same', lflank, rflank, levels_type)],
+              'actions'   : [(combine_data_frames, [inputs, infos, target])],
               'file_dep'  : inputs,
               'targets'   : [target],
               'clean'     : True,
@@ -93,14 +132,73 @@ def task_cross_fisher():
       for lflank, rflank in flank_configs:
         for shape_type in shapes:
           for levels_type in discrete_levels_type:
-            shinfo = shape_info[levels_type][shape_type]
-            shape_levels_str = shinfo.getLevelsStr()
-            inputs = ['/'.join([topresdir, levels_type, en_th, resdir, '.'.join(['fisher', tf1, primer1, motif1, str(cycle1), tf2, primer2, motif2, str(cycle2), shape_type, str(lflank), str(rflank), 'csv'])]) for resdir, tf1, primer1, motif1, family1, dist1, cycle1, tf2, primer2, motif2, family2, dist2, cycle2 in combinations]
-            target = '%s/%s/%s/dfisher_%s.%s.l%d.r%d.csv' % (topresdir, levels_type, en_th, 'cross', shape_type, lflank, rflank)
+            inputs = ['/'.join([top_results_dir, levels_type, en_th, resdir, '.'.join(['fisher', tf1, primer1, motif1, str(cycle1), tf2, primer2, motif2, str(cycle2), shape_type, str(lflank), str(rflank), 'csv'])]) for resdir, tf1, primer1, motif1, family1, dist1, cycle1, tf2, primer2, motif2, family2, dist2, cycle2 in combinations]
+            infos = [(tf1, primer1, family1, tf2, primer2, family2) for resdir, tf1, primer1, motif1, family1, dist1, cycle1, tf2, primer2, motif2, family2, dist2, cycle2 in combinations]
+            target = '%s/%s/%s/dfisher_%s.%s.l%d.r%d.csv' % (top_results_dir, levels_type, en_th, 'cross', shape_type, lflank, rflank)
             yield {
               'name'      : target,
-              'actions'   : ["../scripts/fisher.R %s %s %s %d %d %s" % (shape_type, en_th, 'cross', lflank, rflank, levels_type)],
+              #'actions'   : ["results_scripts/fisher.R %s %s %s %d %d %s" % (shape_type, en_th, 'cross', lflank, rflank, levels_type)],
+              'actions'   : [(combine_data_frames, [inputs, infos, target])],
               'file_dep'  : inputs,
               'targets'   : [target],
               'clean'     : True,
             }
+
+def task_compute_qvalue():
+  for en_th in en_thresholds:
+    for lflank, rflank in flank_configs:
+      for shape_type in shapes:
+        for levels_type in discrete_levels_type:
+          for family in ['bHLH', 'ETS', 'homeodomain']:
+            for exp_type in ['same', 'cross']:
+              infile = '%s/%s/%s/dfisher_%s.%s.l%d.r%d.csv' % (top_results_dir, levels_type, en_th, exp_type, shape_type, lflank, rflank)
+              outfile = '%s/%s/%s/dqvalue_%s.%s.%s.l%d.r%d.csv' % (top_results_dir, levels_type, en_th, exp_type, family, shape_type, lflank, rflank)
+              yield {
+                'name'      : outfile,
+                'actions'   : ["results_scripts/compute_qvalue.R %s %s %s %s" % (shape_type, family, infile, outfile)],
+                'file_dep'  : [infile],
+                'targets'   : [outfile],
+                'clean'     : True,
+              }
+
+
+def task_combine_all_qvalues():
+  for lflank, rflank in flank_configs:
+    infiles = ['%s/%s/%s/dqvalue_%s.%s.%s.l%d.r%d.csv' % (top_results_dir, levels_type, en_th, exp_type, family, shape_type, lflank, rflank)  for en_th in en_thresholds     for shape_type in shapes for levels_type in discrete_levels_type for family in ['bHLH', 'ETS', 'homeodomain'] for exp_type in ['same', 'cross']]
+    infos = [(en_th, shape_type, levels_type, family, 'experiment' if (exp_type == 'same') else 'control')   for en_th in en_thresholds     for shape_type in shapes for levels_type in discrete_levels_type for family in ['bHLH', 'ETS', 'homeodomain'] for exp_type in ['same', 'cross']]
+    outfile = '%s/dqvalue_l%d.r%d.csv' % (top_results_dir, lflank, rflank)
+    yield {
+      'name'      : outfile,
+      'actions'   : [(combine_qvalues, [infiles, infos, outfile])],
+      'file_dep'  : infiles,
+      'targets'   : [outfile],
+      'clean'     : True,
+    }
+
+def task_generate_shape_levels_info():
+  shape_levels_file = '%s/shape_levels.csv' % (top_results_dir)
+  infile = 'analysis_scripts/shape_info.py'
+  yield {
+    'name'      : shape_levels_file,
+    'actions'   : ["%s %s" % (infile, shape_levels_file)],
+    'file_dep'  : [infile],
+    'targets'   : [shape_levels_file],
+    'clean'     : True,
+  }
+
+
+
+def task_plot_qvalues():
+  for lflank, rflank in flank_configs:
+    infile = '%s/dqvalue_l%d.r%d.csv' % (top_results_dir, lflank, rflank)
+    shape_levels_file = '%s/shape_levels.csv' % (top_results_dir)
+    selected_pdf = '%s/fig_qvalue_selected_no_annotation.pdf' % (top_results_dir)
+    separate_pdf = '%s/fig_qvalue_separate_family_no_annotation.pdf' % (top_results_dir)
+    combined_pdf = '%s/fig_qvalue_combined_family_no_annotation.pdf' % (top_results_dir)
+    yield {
+      'name'      : selected_pdf,
+      'actions'   : ["results_scripts/plot_qvalue.R %s %s %s %s %s" % (infile, shape_levels_file, selected_pdf, separate_pdf, combined_pdf)],
+      'file_dep'  : [infile, shape_levels_file],
+      'targets'   : [selected_pdf, separate_pdf, combined_pdf],
+      'clean'     : True,
+    }

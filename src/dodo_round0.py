@@ -228,36 +228,38 @@ def task_get_bg_coverage():
                   'clean'     : True,
                 }
 
-#def task_train_fg_cycle0():
-#  for shape_type in shapes:
-#    for levels_type in discrete_levels_type:
-#      shinfo = shape_info[levels_type][shape_type]
-#      shape_levels_str = shinfo.getLevelsStr()
-#      for motif, dist in izip(motifs, distances):
-#          for lflank, rflank in flank_configs:
-#            input_files = [top_data_dir +'/'+ TFInfo('ZeroCycle', primer, 'NoFamily').getContextedShapemerCountFile(0, motif, dist, lflank, rflank, 'fg', shape_type, shape_levels_str) for primer in zdf['primer'].tolist()]
-#            output_file = getCycle0ProbFile('fg', shape_type, motif, dist, lflank, rflank, shape_levels_str)
-#            yield {
-#              'name'      : output_file,
-#              'actions'   : [(train_all, [input_files, output_file])],
-#              'file_dep'  : input_files,
-#              'targets'   : [output_file],
-#              'clean'     : True,
-#            }
-#          
-#
-#def task_train_bg_cycle0():
-#  for shape_type in shapes:
-#    for levels_type in discrete_levels_type:
-#      shinfo = shape_info[levels_type][shape_type]
-#      shape_levels_str = shinfo.getLevelsStr()
-#      for motif, dist in izip(motifs, distances):
-#            input_files = [top_data_dir +'/'+ TFInfo('ZeroCycle', primer, 'NoFamily').getContextedShapemerCountFile(0, motif, dist, 0, 0, 'bg', shape_type, shape_levels_str) for primer in zdf['primer'].tolist()]
-#            output_file = getCycle0ProbFile('bg', shape_type, motif, dist, 0, 0, shape_levels_str)
-#            yield {
-#              'name'      : output_file,
-#              'actions'   : [(train_all, [input_files, output_file])],
-#              'file_dep'  : input_files,
-#              'targets'   : [output_file],
-#              'clean'     : True,
-#            }
+def task_train_fg_cycle0():
+  for shape_type in shapes:
+    for levels_type in discrete_levels_type:
+      shinfo = shape_info[levels_type][shape_type]
+      shape_levels_str = shinfo.getLevelsStr()
+      for motif, dist in izip(motifs, distances):
+          for lflank, rflank in flank_configs:
+            input_files = [top_data_dir +'/'+ TFInfo('ZeroCycle', primer, 'NoFamily').getContextedShapemerCountFile(0, motif, dist, lflank, rflank, 'fg', shape_type, shape_levels_str) for primer in zdf['primer'].tolist()]
+            output_file = getCycle0ProbFile(top_data_dir, 'fg', shape_type, motif, dist, lflank, rflank, shape_levels_str)
+            ensure_dir(output_file)
+            yield {
+              'name'      : output_file,
+              'actions'   : [(train_all, [input_files, output_file])],
+              'file_dep'  : input_files,
+              'targets'   : [output_file],
+              'clean'     : True,
+            }
+          
+
+def task_train_bg_cycle0():
+  for shape_type in shapes:
+    for levels_type in discrete_levels_type:
+      shinfo = shape_info[levels_type][shape_type]
+      shape_levels_str = shinfo.getLevelsStr()
+      for motif, dist in izip(motifs, distances):
+            input_files = [top_data_dir +'/'+ TFInfo('ZeroCycle', primer, 'NoFamily').getContextedShapemerCountFile(0, motif, dist, 0, 0, 'bg', shape_type, shape_levels_str) for primer in zdf['primer'].tolist()]
+            output_file = getCycle0ProbFile(top_data_dir, 'bg', shape_type, motif, dist, 0, 0, shape_levels_str)
+            ensure_dir(output_file)
+            yield {
+              'name'      : output_file,
+              'actions'   : [(train_all, [input_files, output_file])],
+              'file_dep'  : input_files,
+              'targets'   : [output_file],
+              'clean'     : True,
+            }

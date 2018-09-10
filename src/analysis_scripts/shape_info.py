@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+import sys
 class Alphabet:
   a = [
       "SH",
@@ -63,7 +65,10 @@ shape_info = {
 }
 
 if __name__ == "__main__":
-  with open('shape_levels.csv', 'w') as f:
+  outfile = 'shape_levels.csv'
+  if len(sys.argv) > 1:
+    outfile = sys.argv[1]
+  with open(outfile, 'w') as f:
     f.write("{},{},{},{}\n".format('shape','levels_type','levels_str','levels'))
     for levels_type in ['publish', 'other1']:
       for shape in ['MGW', 'HelT', 'ProT', 'Roll']:
