@@ -22,6 +22,12 @@ The subdirectory `src` also contain the following files which are essential:
 ## Downloading the dataset
 
 The example script `dodo_downloads.py` can be used for downloading all the experiments. Note that downloading all the datasets will require 136G disk space.
+
+Note that all the `doit` task files are kept in `src` directory. Hence we would need to change current working directory to `src`.
+```
+$ cd src
+```
+
 ```
 $ doit -f dodo_downloads.py
 ```
