@@ -50,6 +50,7 @@ The comparison of experiment vs control groups in Co-SELECT analysis and the gen
 ```
 $ doit -n 50 -f dodo_results.py
 ```
+The summary results and plots are saved at `../results` directory.
 
 
 ## Generating the promiscuous shapes
@@ -58,3 +59,4 @@ The promiscuity of shapemers in the motif-free oligos can be computed and the co
 ```
 $ doit -f dodo_promiscuous.py
 ```
+The lists of highly promiscuous shapemers and and plots are saved at `../results` directory.
