@@ -44,7 +44,7 @@ Co-SELECT analysis on the selected TF experiments configured through the file `t
 $ doit -n 50 -f dodo_analyze.py
 ```
 
-## Generating the output
+## Generating the summary reports and plots of the analysis results
 
 The comparison of experiment vs control groups in Co-SELECT analysis and the generation of results is done by invoking the following command:
 ```
