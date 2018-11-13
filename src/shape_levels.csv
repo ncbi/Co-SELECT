@@ -1,0 +1,9 @@
+shape,levels_type,levels_str,levels
+MGW,publish,S4.250M5.400H5.700X,S|4.25|M|5.4|H|5.7|X
+HelT,publish,S31.900M34.000H36.000X,S|31.9|M|34|H|36|X
+ProT,publish,S-8.000M-5.500H,S|-8|M|-5.5|H
+Roll,publish,S-3.000M1.200H5.000X,S|-3|M|1.2|H|5|X
+MGW,other1,S4.000M4.600H5.600X,S|4|M|4.6|H|5.6|X
+HelT,other1,S32.000M34.500H35.500X,S|32|M|34.5|H|35.5|X
+ProT,other1,S-10.500M-5.000H,S|-10.5|M|-5|H
+Roll,other1,S1.200H,S|1.2|H
