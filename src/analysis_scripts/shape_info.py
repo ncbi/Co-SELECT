@@ -51,14 +51,20 @@ class Shape:
 
 shape_info = {
   'publish' : {
+    'Roll' : Shape([-3.92, -1.30, 1.30], 1),
+    'MGW'  : Shape([4.08, 5.13, 5.75], 2),
+    'ProT' : Shape([-9.32, -4.99], 2),
+    'HelT' : Shape([32.04, 33.47, 35.95], 1),
+  },
+  'other1' : {
     'Roll' : Shape([-3, 1.2, 5], 1),
-    'MGW'  : Shape([4.25, 5.4, 5.7], 2),
+    'MGW'  : Shape([4.0, 4.6, 5.6], 2),
     'ProT' : Shape([-8.0, -5.5], 2),
     'HelT' : Shape([31.9, 34, 36], 1),
   },
-  'other1' : {
+  'other2' : {
     'Roll' : Shape([1.2], 1),
-    'MGW'  : Shape([4.0, 4.6, 5.6], 2),
+    'MGW'  : Shape([4.25, 5.4, 5.7], 2),
     'ProT' : Shape([-10.5, -5.0], 2),
     'HelT' : Shape([32, 34.5, 35.5], 1),
   }
@@ -70,7 +76,7 @@ if __name__ == "__main__":
     outfile = sys.argv[1]
   with open(outfile, 'w') as f:
     f.write("{},{},{},{}\n".format('shape','levels_type','levels_str','levels'))
-    for levels_type in ['publish', 'other1']:
+    for levels_type in shape_info.keys(): #['publish', 'other1', 'other2']:
       for shape in ['MGW', 'HelT', 'ProT', 'Roll']:
         print "{},{},{},{}".format(shape,levels_type,shape_info[levels_type][shape].getLevelsStr(),shape_info[levels_type][shape].getLevels())
         f.write("{},{},{},{}\n".format(shape,levels_type,shape_info[levels_type][shape].getLevelsStr(),shape_info[levels_type][shape].getLevels()))

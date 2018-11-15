@@ -215,11 +215,12 @@ shape_levels <- read.csv(shape_levels_file, stringsAsFactors=FALSE)
 #shape_levels$levels <- gsub(':', sprintf('\u2264'), shape_levels$levels)
 shape_levels$new_levels_type <- shape_levels$levels_type
 shape_levels$new_levels_type[shape_levels$levels_type == 'other1'] <- 'alternative'
+shape_levels$new_levels_type[shape_levels$levels_type == 'other2'] <- 'alternative2'
 shape_levels$new_levels_type[shape_levels$levels_type == 'publish'] <- 'main-text'
 shape_levels$levels <- paste(paste(paste('shape', shape_levels$shape, sep=':'), paste('levels', shape_levels$new_levels_type, sep=':'), sep=', '), shape_levels$levels, sep='\n')
 shape_levels <- shape_levels[, c('shape', 'levels_type', 'levels')]
 shape_levels$shape <- factor(shape_levels$shape, levels=c('MGW', 'HelT', 'ProT', 'Roll'), ordered=TRUE)
-shape_levels$levels_type <- factor(shape_levels$levels_type, levels=c('publish', 'other1'), ordered=TRUE)
+shape_levels$levels_type <- factor(shape_levels$levels_type, levels=c('publish', 'other1', 'other2'), ordered=TRUE)
 shape_levels <- shape_levels[order(shape_levels$shape, shape_levels$levels_type), ]
 shape_levels$levels <- factor(shape_levels$levels, levels=shape_levels$levels, ordered=TRUE)
 
@@ -241,7 +242,7 @@ print(head(all))
 ets <- plotQvalueHisto(all[all$family=='ETS',], 'Family: ETS', levels~en_th)
 homeodomain <- plotQvalueHisto(all[all$family=='homeodomain',], 'Family: homeodomain', levels~en_th)
 bhlh <- plotQvalueHisto(all[all$family=='bHLH',], 'Family: bHLH', levels~en_th)
-cairo_pdf(file=separate_pdf, bg='white', width=15, height=18.3, onefile=TRUE)
+cairo_pdf(file=separate_pdf, bg='white', width=15, height=28, onefile=TRUE)
 grid.newpage()
 grid.draw(bhlh)
 grid.newpage()
@@ -252,7 +253,7 @@ dev.off()
 
 
 combined <- plotQvalueHisto(all[all$en_th=='1.20',], 'Enrichment Threshold: 1.20', levels~family)
-cairo_pdf(file=combined_pdf, bg='white', width=15, height=18.3, onefile=TRUE)
+cairo_pdf(file=combined_pdf, bg='white', width=15, height=28, onefile=TRUE)
 grid.newpage()
 grid.draw(combined)
 dev.off()

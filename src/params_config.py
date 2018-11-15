@@ -16,7 +16,7 @@ shapes                    = ["MGW", "ProT", "HelT", "Roll"]
 
 flank_configs             = [(1,1)]
 
-discrete_levels_type      = ['publish', 'other1']
+discrete_levels_type      = ['publish', 'other1', 'other2']
 
 en_thresholds             = ['1.05', '1.10', '1.20', '1.50']
 

@@ -12,10 +12,10 @@ inset <- read.csv(text='en_th, shape, height, xmin, ymin
 1.10,HelT, 0.70, 40, 0.32
 1.10,ProT, 0.65, 35, 0.35
 1.10,Roll, 0.15, 1.6, 0.15
-1.20,MGW,  0.15, 15, 0.08
-1.20,HelT, 0.45, 20, 0.20
+1.20,MGW,  0.125, 15, 0.08
+1.20,HelT, 0.25, 20, 0.20
 1.20,ProT, 0.40, 30, 0.15
-1.20,Roll, 0.30, 35, 0.10
+1.20,Roll, 0.25, 35, 0.10
 ', stringsAsFactors = FALSE, colClasses=c("en_th"="character"))
 
 shapes <- c("MGW", "HelT", "ProT", "Roll")
@@ -111,7 +111,7 @@ getPlotWithInset <- function(all) {
   insets <- dlply(all, c("shape"), function(d){
       with_limits <- merge(d,limits) %>% filter(x < xmax)
       annotation_custom2(grob = ggplotGrob(plotEnrichedShapes(with_limits) +
-                                   geom_text(aes(label=kmer), angle=90, y=-Inf, hjust=-0.2) +
+                                   geom_text(aes(label=kmer), angle=90, y=-Inf, hjust=-0.2,family='Courier') +
                                    scale_y_continuous(position = "right")+
           theme(legend.position="none") +
                                    theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
