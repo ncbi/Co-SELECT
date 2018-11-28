@@ -41,11 +41,11 @@ class TFInfo:
     return self.getContextedShapemerFile(cycle, motif, dist_th, lflank, rflank, ctx, shape, shape_levels_str) + '.cnt'
  
 
-  def partition_aptamers(self, seq_file, motif, distance_threshold, fg_file, bg_file):
+  def partition_aptamers_old(self, seq_file, motif, distance_threshold, fg_file, bg_file):
     with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
       for i, l in enumerate(f):
          seq = l.rstrip()
-         seq = seq[2:-2]
+         #seq = seq[2:-2]
          rev = rev_comp(seq)
          d = hamming_all(seq, motif)
          rd = hamming_all(rev, motif)
@@ -53,11 +53,32 @@ class TFInfo:
            print >>g0, i
          if (d >= distance_threshold) and (rd >= distance_threshold):
            print >>g1, i
+
+  def partition_aptamers(self, seq_file, barcode, motif, distance_threshold, fg_file, bg_file):
+    res = re.match('([ACGT]+)\d+N([ACGT]+)', barcode)
+    left_barcode_len = len(res.group(1))
+    right_barcode_len = len(res.group(2))
+    with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
+      for i, l in enumerate(f):
+         seq = l.rstrip()
+         #seq = seq[2:-2]       # WE NO LONGER DISCARD THE TWO BASES AT THE ENDS 
+         rev = rev_comp(seq)
+         d = hamming_all(seq, motif)
+         rd = hamming_all(rev, motif)
+         if (d == 0) or (rd == 0):
+           print >>g0, i
+         else:
+           #if (d >= distance_threshold) and (rd >= distance_threshold):
+           #  print >>g1, i
+           d = hamming_pair_match(seq, motif, left_barcode_len, right_barcode_len)
+           rd = hamming_pair_match(rev, motif, right_barcode_len, left_barcode_len)
+           if (d <= 1) and (rd <= 1):
+             print >>g1, i
            
   def gen_fg_parts(self, seq_file, sid_file, motif, parts_file):
     with open(parts_file, "w") as g:
-      for i, l in filterSeq(seq_file, sid_file):
-         seq = l[2:-2]
+      for i, seq in filterSeq(seq_file, sid_file):
+         #seq = seq[2:-2]
          rev = rev_comp(seq)
          pos = find_all_occur(seq, motif)
          rpos = find_all_occur(rev, motif)

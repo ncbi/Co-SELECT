@@ -111,6 +111,8 @@ getInfo <- function(datadir, cycle, ctx, shape, motif, dist, lflank, rflank, sha
   count_col <- paste0(data_name, '.count')
   frac_col <- paste0(data_name, '.frac')
 
+  #print(fpath)
+
   df <- read.table(fpath, header=FALSE, col.names = c(count_col, 'kmer'))
   df[, frac_col] <- df[, count_col] / sum(df[, count_col])
 
@@ -210,6 +212,9 @@ getCrossSummary <-function(top_data_dir, top_res_dir, tf1, primer1, family1, mot
 
   fg <- getEnrichmentInfo(top_data_dir, tf1, primer1, family1, cycle1, 'fg', shape, motif1, dist1, lflank, rflank, shape_levels)
   bg <- getEnrichmentInfo(top_data_dir, tf2, primer2, family2, cycle2, 'bg', shape, motif2, dist2, lflank, rflank, shape_levels)
+
+  #print(fg)
+  #print(bg)
 
   dshapes <- ddply(rbind(data.frame(kmer=fg$kmer, context='fg'), data.frame(kmer=bg$kmer, context='bg')), .(kmer), summarise, context=makeBoth(context))
 

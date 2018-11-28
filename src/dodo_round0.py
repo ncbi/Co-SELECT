@@ -12,7 +12,6 @@ for i, row in zdf.iterrows():
   accession = row['accession']
   task_infos.append(TaskInfo(tf, bc, 'NoFamily', accession, motifs, cycles, distances))
 
-
 def task_preprocess():
   """ Unzip fastq files, keep only sequence info of those containing only ACGT """
   for task in task_infos:
@@ -23,7 +22,7 @@ def task_preprocess():
       ensure_dir(seq_file)
       yield {
         'name'      : seq_file,
-        'actions'   : [(unzip_seq_filter_N, [fastq_file, seq_file, count_file])],
+        'actions'   : [(unzip_seq_filter_N, [task.tf_info.primer, fastq_file, seq_file, count_file])],
         'file_dep'  : [fastq_file],
         'targets'   : [seq_file, count_file],
         'clean'     : True,

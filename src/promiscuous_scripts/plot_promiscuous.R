@@ -12,10 +12,10 @@ inset <- read.csv(text='en_th, shape, height, xmin, ymin
 1.10,HelT, 0.70, 40, 0.32
 1.10,ProT, 0.65, 35, 0.35
 1.10,Roll, 0.15, 1.6, 0.15
-1.20,MGW,  0.125, 15, 0.08
-1.20,HelT, 0.25, 20, 0.20
-1.20,ProT, 0.40, 30, 0.15
-1.20,Roll, 0.25, 35, 0.10
+1.20,MGW,  0.25, 15, 0.20
+1.20,HelT, 0.45, 20, 0.20
+1.20,ProT, 0.45, 30, 0.25
+1.20,Roll, 0.40, 35, 0.20
 ', stringsAsFactors = FALSE, colClasses=c("en_th"="character"))
 
 shapes <- c("MGW", "HelT", "ProT", "Roll")

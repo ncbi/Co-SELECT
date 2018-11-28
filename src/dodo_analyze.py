@@ -2,6 +2,8 @@ from dodo_common import *
 
 task_infos = []
 
+#tfs = tfs[tfs['tf'] == 'MAX']
+
 for i, row in tfs.iterrows():
   tf = row['tf']
   bc = row['primer']
@@ -24,11 +26,13 @@ def task_preprocess():
       ensure_dir(seq_file)
       yield {
         'name'      : seq_file,
-        'actions'   : [(unzip_seq_filter_N, [fastq_file, seq_file, count_file])],
+        #'actions'   : [(unzip_seq_filter_N, [task.tf_info.primer, fastq_file, seq_file, count_file])],
+        'actions'   : [(unzip_seq_filter_N_old, [fastq_file, seq_file, count_file])],
         'file_dep'  : [fastq_file],
         'targets'   : [seq_file, count_file],
         'clean'     : True,
       }
+
 
 def task_get_shape():
   """ Generate MGW values from input apramer partitions using DNAShape program """
@@ -76,7 +80,7 @@ def task_partition():
           bg_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
           yield {
             'name'      : ':'.join([seq_file, motif, str(dist)]),
-            'actions'   : [(task.tf_info.partition_aptamers, [seq_file, motif, dist, fg_file, bg_file])],
+            'actions'   : [(task.tf_info.partition_aptamers, [seq_file, task.tf_info.primer, motif, dist, fg_file, bg_file])],
             'file_dep'  : [seq_file],
             'targets'   : [fg_file, bg_file],
             'clean'     : True,
