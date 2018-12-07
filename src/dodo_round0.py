@@ -116,7 +116,7 @@ def task_get_fg_shapemers():
                 shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
                 yield {
                   'name'      : shapemer_file,
-                  'actions'   : [(task.tf_info.gen_fg_shapemers, [shinfo, task.shape_length, shape_file, count_file, context_file, motif, lflank, rflank, parts_file, shapemer_file])],
+                  'actions'   : [(task.tf_info.gen_fg_shapemers, [shinfo, task.shape_length, seq_file, shape_file, count_file, context_file, motif, lflank, rflank, parts_file, shapemer_file])],
                   'file_dep'  : [shape_file, count_file, context_file, parts_file],
                   'targets'   : [shapemer_file],
                   'clean'     : True,

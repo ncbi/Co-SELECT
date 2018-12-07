@@ -1,7 +1,6 @@
 from dodo_common import *
 
 
-
 task_infos = []
 
 for i, row in tfs.iterrows():
@@ -220,5 +219,3 @@ def task_plot_qvalues():
       'targets'   : [selected_pdf, separate_pdf, combined_pdf],
       'clean'     : True,
     }
-
-
