@@ -63,6 +63,7 @@ class TFInfo:
       for i, l in enumerate(f):
          seq = l.rstrip()
          #seq = seq[2:-2]       # WE NO LONGER DISCARD THE TWO BASES AT THE ENDS 
+         seq = seq[self.lbc_len : -self.rbc_len]
          rev = rev_comp(seq)
          d = hamming_all(seq, motif)
          rd = hamming_all(rev, motif)
@@ -71,8 +72,10 @@ class TFInfo:
          else:
            #if (d >= distance_threshold) and (rd >= distance_threshold):
            #  print >>g1, i
-           d = hamming_pair_match(seq, motif, left_barcode_len, right_barcode_len)
-           rd = hamming_pair_match(rev, motif, right_barcode_len, left_barcode_len)
+           #d = hamming_pair_match_with_barcode(seq, motif, self.lbc_len, self.rbc_len)
+           #rd = hamming_pair_match_with_barcode(rev, motif, self.rbc_len, self.lbc_len)
+           d = hamming_pair_match(seq, motif)
+           rd = hamming_pair_match(rev, motif)
            if (d <= 1) and (rd <= 1):
              print >>g1, i
            

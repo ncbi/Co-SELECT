@@ -12,10 +12,10 @@ inset <- read.csv(text='en_th, shape, height, xmin, ymin
 1.10,HelT, 0.70, 40, 0.32
 1.10,ProT, 0.65, 35, 0.35
 1.10,Roll, 0.15, 1.6, 0.15
-1.20,MGW,  0.25, 15, 0.20
-1.20,HelT, 0.45, 20, 0.20
-1.20,ProT, 0.45, 30, 0.25
-1.20,Roll, 0.40, 35, 0.20
+1.20,MGW,  0.33, 15, 0.20
+1.20,HelT, 0.33, 20, 0.20
+1.20,ProT, 0.33, 30, 0.25
+1.20,Roll, 0.33, 35, 0.20
 ', stringsAsFactors = FALSE, colClasses=c("en_th"="character"))
 
 shapes <- c("MGW", "HelT", "ProT", "Roll")
@@ -67,8 +67,9 @@ plotEnrichedShapes <- function(df) {
   #print(df)
   print('in plotenrich')
   print(unique(df$shape))
-  p <- ggplot(df, aes(x=x, y=minfrac, fill=promiscuous)) +
-        facet_wrap(~shape, scales='free',ncol=2) +
+  p <- ggplot(df, aes(x=x, y=promiscuity, fill=promiscuous)) +
+        #facet_wrap(~shape, scales='free',ncol=2) +
+        facet_wrap(~shape, ncol=2) +
         geom_bar(stat='identity', position='dodge') +
         theme_few() +
         theme(axis.text.x=element_blank(),axis.ticks.x=element_blank()) +
@@ -85,8 +86,8 @@ plotEnrichedShapes <- function(df) {
 
 getPlotWithInset <- function(all) {
 
-  tmp <- ddply(all, .(shape, kmer), summarize, maxminfrac = max(minfrac))
-  tmp <- ddply(tmp, .(shape), mutate, x = rank(-maxminfrac, ties.method="first"))
+  tmp <- ddply(all, .(shape, kmer), summarize, maxpromiscuity = max(promiscuity))
+  tmp <- ddply(tmp, .(shape), mutate, x = rank(-maxpromiscuity, ties.method="first"))
   all <- merge(all, tmp, all.x=TRUE, id.vars=c('shape'))
 
   all <- ddply(all, .(shape), transform, xmin=max(xmin), ymin=max(ymin))
@@ -133,9 +134,17 @@ print(outfile)
 print(selected_pdf)
 print(combined_pdf)
 
+print(infile)
+
 all <- read.csv(infile, stringsAsFactors=F, colClasses=c("en_th"="character"))
+
+print(all)
+
+print(all[all$en_th == '1.20', ])
+
+
 all <- merge(all, inset, all.x = TRUE)
-all <- ddply(all, .(shape, kmer, en_th), transform, promiscuous = ifelse(minfrac > height, 'High', 'Low'))
+all <- ddply(all, .(shape, kmer, en_th), transform, promiscuous = ifelse(promiscuity > height, 'High', 'Low'))
 all$shape <- factor(all$shape, levels=c('MGW', 'HelT', 'ProT', 'Roll'))
 
 write.csv(all[all$en_th=='1.20' & all$promiscuous == 'Yes', c('shape', 'kmer', 'promiscuous')], file=outfile, row.names=FALSE)

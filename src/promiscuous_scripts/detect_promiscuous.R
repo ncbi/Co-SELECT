@@ -6,9 +6,6 @@ require(optparse)
 #source("tf_utils.R")
 
 
-lflank <- 1
-rflank <- 1
-cycle <- 4
 en_th <- "1.20"
 shape <- 'MGW'
 
@@ -58,9 +55,10 @@ computePromiscuity <- function(df, tf_per_family) {
   print(df)
 
   df$frac <- df$count/df$num_tfs
-  df <- ddply(df, .(kmer), summarize, num_family=length(family), minfrac=min(frac))
+  df <- ddply(df, .(kmer), summarize, num_family=length(family), promiscuity=min(frac))
+  # discard those shapemers which are not present in all considered families
   df <- df[df$num_family >= nrow(tf_per_family),]
-  df <- df[order(-df$minfrac), c('kmer', 'minfrac')]
+  df <- df[order(-df$promiscuity), c('kmer', 'promiscuity')]
 
   return(df)
 }

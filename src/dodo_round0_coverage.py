@@ -3,6 +3,24 @@ from dodo_common import *
 zdf = pd.read_csv(zero_accession_file)
 zdf = zdf[zdf['primer'].str.contains('14N')==False]
 
+
+print zdf
+print tfs
+
+tmp = tfs[['tf', 'primer', 'motif', 'distance']]
+tmp['modist'] = [(mo, di) for mo, di in izip(tmp['motif'], tmp['distance'])]
+tmp = tmp[['tf', 'primer', 'modist']]
+
+print tmp
+
+zdf = zdf.merge(tmp, on='primer')
+print zdf
+
+zdf = zdf.groupby('primer').agg(dict(accession = lambda x: list(set(x))[0],
+                                     modist = lambda x: list(set(x)),
+                                     tf = lambda x: '{%s}'%','.join(x))).reset_index()
+print zdf
+
 task_infos = []
 
 for i, row in zdf.iterrows():
@@ -10,7 +28,11 @@ for i, row in zdf.iterrows():
   bc = row['primer']
   cycles = [0]
   accession = row['accession']
+  motifs = [mo for mo, di in row['modist']]
+  distances = [di for mo, di in row['modist']]
+  print row['tf'], row['modist'], motifs, distances
   task_infos.append(TaskInfo(tf, bc, 'NoFamily', accession, motifs, cycles, distances))
+
 
 def task_preprocess():
   """ Unzip fastq files, keep only sequence info of those containing only ACGT """
@@ -184,81 +206,46 @@ def task_count_bg_shapemers():
                   'clean'     : True,
                 }
 
-#def task_get_fg_coverage():
-#  """ Get coverage information for each shape mer """
-#  for task in task_infos:
-#    for lflank, rflank in flank_configs:
-#      for shape_type in shapes:
-#        for levels_type in discrete_levels_type:
-#          shinfo = shape_info[levels_type][shape_type]
-#          shape_levels_str = shinfo.getLevelsStr()
-#          for cycle in task.cycles:
-#            for motif, dist in izip(task.motifs, task.distances):
-#                shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
-#                cov_file = shapemer_file + ".cov"
-#                context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
-#                count_file = "%s/%s.cnt" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
-#                yield {
-#                  'name'      : cov_file,
-#                  'actions'   : [(getCoverage, [context_file, count_file, shapemer_file, cov_file])],
-#                  'file_dep'  : [shapemer_file, count_file, context_file],
-#                  'targets'   : [cov_file],
-#                  'clean'     : True,
-#                }
-#
-#def task_get_bg_coverage():
-#  """ Get coverage information for each shape mer """
-#  for task in task_infos:
-#      for shape_type in shapes:
-#        for levels_type in discrete_levels_type:
-#          shinfo = shape_info[levels_type][shape_type]
-#          shape_levels_str = shinfo.getLevelsStr()
-#          for cycle in task.cycles:
-#            for motif, dist in izip(task.motifs, task.distances):
-#                shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
-#                cov_file = shapemer_file + ".cov"
-#                context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
-#                count_file = "%s/%s.cnt" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
-#                yield {
-#                  'name'      : cov_file,
-#                  'actions'   : [(getCoverage, [context_file, count_file, shapemer_file, cov_file])],
-#                  'file_dep'  : [shapemer_file, count_file, context_file],
-#                  'targets'   : [cov_file],
-#                  'clean'     : True,
-#                }
+def task_get_fg_coverage():
+  """ Get coverage information for each shape mer """
+  for task in task_infos:
+    for lflank, rflank in flank_configs:
+      for shape_type in shapes:
+        for levels_type in discrete_levels_type:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for cycle in task.cycles:
+            for motif, dist in izip(task.motifs, task.distances):
+                shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+                cov_file = shapemer_file + ".cov"
+                context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
+                count_file = "%s/%s.cnt" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+                yield {
+                  'name'      : cov_file,
+                  'actions'   : [(getCoverage, [context_file, count_file, shapemer_file, cov_file])],
+                  'file_dep'  : [shapemer_file, count_file, context_file],
+                  'targets'   : [cov_file],
+                  'clean'     : True,
+                }
 
-def task_train_fg_cycle0():
-  for shape_type in shapes:
-    for levels_type in discrete_levels_type:
-      shinfo = shape_info[levels_type][shape_type]
-      shape_levels_str = shinfo.getLevelsStr()
-      for motif, dist in izip(motifs, distances):
-          for lflank, rflank in flank_configs:
-            input_files = [top_data_dir +'/'+ TFInfo('ZeroCycle', primer, 'NoFamily').getContextedShapemerCountFile(0, motif, dist, lflank, rflank, 'fg', shape_type, shape_levels_str) for primer in zdf['primer'].tolist()]
-            output_file = getCycle0ProbFile(top_data_dir, 'fg', shape_type, motif, dist, lflank, rflank, shape_levels_str)
-            ensure_dir(output_file)
-            yield {
-              'name'      : output_file,
-              'actions'   : [(train_all, [input_files, output_file])],
-              'file_dep'  : input_files,
-              'targets'   : [output_file],
-              'clean'     : True,
-            }
-          
+def task_get_bg_coverage():
+  """ Get coverage information for each shape mer """
+  for task in task_infos:
+      for shape_type in shapes:
+        for levels_type in discrete_levels_type:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for cycle in task.cycles:
+            for motif, dist in izip(task.motifs, task.distances):
+                shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
+                cov_file = shapemer_file + ".cov"
+                context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
+                count_file = "%s/%s.cnt" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+                yield {
+                  'name'      : cov_file,
+                  'actions'   : [(getCoverage, [context_file, count_file, shapemer_file, cov_file])],
+                  'file_dep'  : [shapemer_file, count_file, context_file],
+                  'targets'   : [cov_file],
+                  'clean'     : True,
+                }
 
-def task_train_bg_cycle0():
-  for shape_type in shapes:
-    for levels_type in discrete_levels_type:
-      shinfo = shape_info[levels_type][shape_type]
-      shape_levels_str = shinfo.getLevelsStr()
-      for motif, dist in izip(motifs, distances):
-            input_files = [top_data_dir +'/'+ TFInfo('ZeroCycle', primer, 'NoFamily').getContextedShapemerCountFile(0, motif, dist, 0, 0, 'bg', shape_type, shape_levels_str) for primer in zdf['primer'].tolist()]
-            output_file = getCycle0ProbFile(top_data_dir, 'bg', shape_type, motif, dist, 0, 0, shape_levels_str)
-            ensure_dir(output_file)
-            yield {
-              'name'      : output_file,
-              'actions'   : [(train_all, [input_files, output_file])],
-              'file_dep'  : input_files,
-              'targets'   : [output_file],
-              'clean'     : True,
-            }

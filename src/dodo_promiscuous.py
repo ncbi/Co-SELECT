@@ -2,7 +2,8 @@ from dodo_common import *
 from doit.tools import run_once
 
 en_thresholds = ["1.10", "1.20"]
-discrete_levels_type = ["publish"]
+discrete_levels_type = ["publish", "other1"]
+levels_names = {'publish': 'main-text', 'other1': 'alternative'}
 cycle = 4
 
 print en_thresholds
@@ -76,8 +77,8 @@ def task_plot_promiscuous():
     for lflank, rflank in flank_configs:
       infile = '%s/promiscuous_%s_l%d.r%d.csv' % (top_results_dir, levels_type, lflank, rflank)
       outfile = '%s/highly_promiscuous_%s_l%d.r%d.csv' % (top_results_dir, levels_type, lflank, rflank)
-      selected_pdf = '%s/fig_promiscuous_shapemers.pdf' % (top_results_dir)
-      combined_pdf = '%s/fig_promiscuous_shapemers_compare_threshold.pdf' % (top_results_dir)
+      selected_pdf = '%s/fig_promiscuous_shapemers_%s.pdf' % (top_results_dir, levels_names[levels_type])
+      combined_pdf = '%s/fig_promiscuous_shapemers_compare_threshold_%s.pdf' % (top_results_dir, levels_names[levels_type])
       yield {
         'name'      : selected_pdf,
         'actions'   : ["promiscuous_scripts/plot_promiscuous.R %s %s %s %s" % (infile, outfile, selected_pdf, combined_pdf)],

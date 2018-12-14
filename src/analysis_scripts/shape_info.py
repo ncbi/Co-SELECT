@@ -51,22 +51,22 @@ class Shape:
 
 shape_info = {
   'publish' : {
-    'Roll' : Shape([-3.92, -1.30, 1.30], 1),
-    'MGW'  : Shape([4.08, 5.13, 5.75], 2),
-    'ProT' : Shape([-9.32, -4.99], 2),
+    'MGW'  : Shape([4.0, 4.6, 5.6], 2),
     'HelT' : Shape([32.04, 33.47, 35.95], 1),
+    'ProT' : Shape([-9.32, -4.99], 2),
+    'Roll' : Shape([-3.92, -1.30, 1.30], 1),
   },
   'other1' : {
-    'Roll' : Shape([-3, 1.2, 5], 1),
-    'MGW'  : Shape([4.0, 4.6, 5.6], 2),
-    'ProT' : Shape([-8.0, -5.5], 2),
+    'MGW'  : Shape([4.08, 5.13, 5.75], 2),
     'HelT' : Shape([31.9, 34, 36], 1),
+    'ProT' : Shape([-8.0, -5.5], 2),
+    'Roll' : Shape([-3, 1.2, 5], 1),
   },
   'other2' : {
-    'Roll' : Shape([1.2], 1),
     'MGW'  : Shape([4.25, 5.4, 5.7], 2),
-    'ProT' : Shape([-10.5, -5.0], 2),
     'HelT' : Shape([32, 34.5, 35.5], 1),
+    'ProT' : Shape([-10.5, -5.0], 2),
+    'Roll' : Shape([1.2], 1),
   }
 }
 
