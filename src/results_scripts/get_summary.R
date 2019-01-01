@@ -2,7 +2,7 @@
 require(plyr, quietly=TRUE)
 source("results_scripts/tf_utils.R")
 
-top_data_dir <- '../data'
+top_data_dir <- '.'
 top_res_dir <- '.'
 #SPDEF,TCATTG20NCG,ETS,,1;2;3;4,Yes,GGAT;GNAA,GGAA,1,1
 #ARNTL,TCAAAA20NCG,bHLH,,1;2;3;4,No,,CACGTG,1,1
@@ -82,6 +82,9 @@ if (length(args) > 10) {
 }
 if (length(args) > 11) {
   family =args[12]
+}
+if (length(args) > 12) {
+  top_data_dir =args[13]
 }
 
 ENRICHMENT_THRESHOLD <<- as.numeric(en_th)

@@ -20,8 +20,6 @@ cross = cross.loc[cross['family_x'] != cross['family_y']]
 #cross = cross.loc[~(((cross['family_x'] == 'homeodomain') & (cross['family_y'] == 'ETS')) | ((cross['family_y'] == 'homeodomain') & (cross['family_x'] == 'ETS')))]
 
 
-print en_thresholds
-
 def combine_data_frames(infiles, infos, outfile):
   df = pd.DataFrame()
   for infile, (tf1, primer1, family1, tf2, primer2, family2) in izip(infiles, infos):
@@ -33,7 +31,6 @@ def combine_data_frames(infiles, infos, outfile):
     tmp['primer.y'] = primer2
     tmp['family.y'] = family2
     df = df.append(tmp, ignore_index=True)
-  print df
   df.to_csv(outfile, index=False)
 
 
@@ -47,7 +44,6 @@ def combine_qvalues(infiles, infos, outfile):
     tmp['family'] = family
     tmp['ctx'] = ctx
     df = df.append(tmp, ignore_index=True)
-  print df
   df.to_csv(outfile, index=False)
 
 def task_get_summary():
@@ -60,7 +56,6 @@ def task_get_summary():
             shinfo = shape_info[levels_type][shape_type]
             shape_levels_str = shinfo.getLevelsStr()
             for cycle in task.cycles:
-              print en_th, task.tf, cycle
               for motif, dist in izip(task.motifs, task.distances):
                   input_files = [top_data_dir +'/'+ task.tf_info.getContextedShapemerCountFile(cycle, motif, dist, lflank, rflank, ctx, shape_type, shape_levels_str) for ctx in contexts]
                   resdir = '/'.join([top_results_dir, levels_type, en_th, task.family, task.tf, task.primer])
@@ -69,7 +64,7 @@ def task_get_summary():
                   prob_files = [getCycle0ProbFile(top_data_dir, ctx, shape_type, motif, dist, lflank, rflank, shape_levels_str) for ctx in contexts]
                   yield {
                     'name'      : output_file,
-                    'actions'   : ["results_scripts/get_summary.R %s %s %d %s %s %d %d %d %s %s %s %s" % (task.tf, task.primer, cycle, shape_type, motif, dist, lflank, rflank, en_th, resdir, shape_levels_str, task.family)],
+                    'actions'   : ["results_scripts/get_summary.R %s %s %d %s %s %d %d %d %s %s %s %s %s" % (task.tf, task.primer, cycle, shape_type, motif, dist, lflank, rflank, en_th, resdir, shape_levels_str, task.family, top_data_dir)],
                     'file_dep'  : input_files + prob_files,
                     'targets'   : [output_file],
                     'clean'     : True,
@@ -97,7 +92,7 @@ def task_get_cross_summary():
             prob_files += [getCycle0ProbFile(top_data_dir, 'bg', shape_type, motif2, dist2, lflank, rflank, shape_levels_str)]
             yield {
               'name'      : output_file,
-              'actions'   : ["results_scripts/get_cross_summary.R %s %s %s %s %d %d %s %s %s %s %d %d %s %d %d %s %s %s" % (tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape_type, lflank, rflank, en_th, resdir, shape_levels_str)],
+              'actions'   : ["results_scripts/get_cross_summary.R %s %s %s %s %d %d %s %s %s %s %d %d %s %d %d %s %s %s %s" % (tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape_type, lflank, rflank, en_th, resdir, shape_levels_str, top_data_dir)],
               'file_dep'  : input_files + prob_files,
               'targets'   : [output_file],
               'clean'     : True,
@@ -192,30 +187,3 @@ def task_combine_all_qvalues():
       'clean'     : True,
     }
 
-def task_generate_shape_levels_info():
-  shape_levels_file = '%s/shape_levels.csv' % (top_results_dir)
-  infile = 'analysis_scripts/shape_info.py'
-  yield {
-    'name'      : shape_levels_file,
-    'actions'   : ["%s %s" % (infile, shape_levels_file)],
-    'file_dep'  : [infile],
-    'targets'   : [shape_levels_file],
-    'clean'     : True,
-  }
-
-
-
-def task_plot_qvalues():
-  for lflank, rflank in flank_configs:
-    infile = '%s/dqvalue_l%d.r%d.csv' % (top_results_dir, lflank, rflank)
-    shape_levels_file = '%s/shape_levels.csv' % (top_results_dir)
-    selected_pdf = '%s/fig_qvalue_selected_no_annotation.pdf' % (top_results_dir)
-    separate_pdf = '%s/fig_qvalue_separate_family_no_annotation.pdf' % (top_results_dir)
-    combined_pdf = '%s/fig_qvalue_combined_family_no_annotation.pdf' % (top_results_dir)
-    yield {
-      'name'      : selected_pdf,
-      'actions'   : ["results_scripts/plot_qvalue.R %s %s %s %s %s" % (infile, shape_levels_file, selected_pdf, separate_pdf, combined_pdf)],
-      'file_dep'  : [infile, shape_levels_file],
-      'targets'   : [selected_pdf, separate_pdf, combined_pdf],
-      'clean'     : True,
-    }

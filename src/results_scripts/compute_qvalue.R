@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 library(qvalue)
-source("results_scripts/tf_utils.R")
+#source("results_scripts/tf_utils.R")
 
 getQvalues <- function(df, text) {
   #qobj <- qvalue(p = df$pvalue, lambda = seq(0.0125, 0.10, 0.0125), pi0.method="bootstrap")
@@ -27,6 +27,7 @@ getQvalues <- function(df, text) {
   return(data.frame(df, qvalue=qvalue, nullratio=pi0))
 }
 
+
 args = commandArgs(trailingOnly=TRUE)
 
 shape = args[1]
@@ -37,5 +38,6 @@ outfile = args[4]
 sdf <- read.csv(infile, stringsAsFactors=F)
 sdf <- sdf[sdf$family.x == family, ]
 df <- getQvalues(sdf[, c('tf.x', 'primer.x', 'tf.y', 'primer.y', 'pvalue')])
+df$rvalue <- p.adjust(df$pvalue, method='fdr')
 
 write.csv(df, file=outfile, row.names=FALSE)

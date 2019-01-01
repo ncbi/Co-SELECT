@@ -91,7 +91,7 @@ getProbFile <- function(ctx, shape, motif, dist, lflank, rflank, shape_levels) {
     fname <- paste(fname, paste0('l', lflank), paste0('r', rflank), sep='.')
   }
   fname <- paste(fname, 'txt', sep='.')
-  return(paste0('../data/simple_predict/', fname))
+  return(fname)
 }
 
 getInfo <- function(datadir, cycle, ctx, shape, motif, dist, lflank, rflank, shape_levels) {
@@ -136,11 +136,11 @@ is.true <- function(x) {
 }
 
 
-getEstimate <- function(ctx, shape, motif, dist, lflank, rflank, shape_levels) {
+getEstimate <- function(ctx, shape, motif, dist, lflank, rflank, shape_levels, topdir) {
   file_estimate <- getProbFile(ctx, shape, motif, dist, lflank, rflank, shape_levels)
-  #path_estimate <- paste('simple_predict', file_estimate, sep='/')
+  path_estimate <- paste(topdir, 'simple_predict', file_estimate, sep='/')
   cn_estimated <- paste0(ctx, '0.estimated')
-  df <- read.table(file_estimate, header=FALSE, col.names=c('kmer', 'skip', cn_estimated),
+  df <- read.table(path_estimate, header=FALSE, col.names=c('kmer', 'skip', cn_estimated),
                    colClasses=c('character', 'NULL', 'numeric'))
   return(df)
 }
@@ -155,7 +155,7 @@ getEnrichmentInfo <-function(topdir, tf, primer, family, cycle, ctx, shape, moti
   cn_kmer <- 'kmer'
   cn_fg0_estimated <- paste0(ctx, '0.estimated')
 
-  fg0.est <- getEstimate(ctx, shape, motif, dist, lflank, rflank, shape_levels)
+  fg0.est <- getEstimate(ctx, shape, motif, dist, lflank, rflank, shape_levels, topdir)
 
   cn_fg_frac <- paste0(ctx, cycle, '.frac')
   cn_fg_cov <- paste0(ctx, cycle, '.cov')

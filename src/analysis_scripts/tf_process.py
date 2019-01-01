@@ -1,6 +1,7 @@
 from itertools import product, izip
 from tf_utils import *
 from kmer_utils import *
+import pandas as pd
 
 def getRepresent(shape):
   rev = shape[::-1]
@@ -44,7 +45,42 @@ class TFInfo:
     return self.getContextedShapemerFile(cycle, motif, dist_th, lflank, rflank, ctx, shape, shape_levels_str) + '.cnt'
  
 
-  def partition_aptamers(self, seq_file, motif, distance_threshold, fg_file, bg_file):
+  def partition_aptamers_all_d1(self, seq_file, motif, distance_threshold, fg_file, bg_file):
+    with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
+      for i, l in enumerate(f):
+         seq = l.rstrip()
+         #seq = seq[2:-2]
+         seq = seq[self.lbc_len : -self.rbc_len]
+         rev = rev_comp(seq)
+         d = hamming_all(seq, motif)
+         rd = hamming_all(rev, motif)
+         if (d <= 1) or (rd <= 1):
+           print >>g0, i
+         if (d >= distance_threshold) and (rd >= distance_threshold):
+           print >>g1, i
+ 
+  def partition_aptamers(self, seq_file, motif, distance_threshold, nbr_file, fg_file, bg_file):
+    d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
+    with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
+      for i, l in enumerate(f):
+         seq = l.rstrip()
+         #seq = seq[2:-2]
+         seq = seq[self.lbc_len : -self.rbc_len]
+         rev = rev_comp(seq)
+         d = hamming_all(seq, motif)
+         rd = hamming_all(rev, motif)
+         if (d == 0) or (rd == 0):
+           print >>g0, i
+         elif (d >= distance_threshold) and (rd >= distance_threshold):
+           print >>g1, i
+         else:
+           d = min([hamming_all(seq, nbr) for nbr in d1_nbrs])
+           rd = min([hamming_all(rev, nbr) for nbr in d1_nbrs])
+           if (d == 0) or (rd == 0):
+             print >>g0, i
+
+
+  def partition_aptamers_orig(self, seq_file, motif, distance_threshold, fg_file, bg_file):
     with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
       for i, l in enumerate(f):
          seq = l.rstrip()
@@ -58,7 +94,7 @@ class TFInfo:
          if (d >= distance_threshold) and (rd >= distance_threshold):
            print >>g1, i
 
-  def partition_aptamers_new(self, seq_file, motif, distance_threshold, fg_file, bg_file):
+  def partition_aptamers_matching_pair(self, seq_file, motif, distance_threshold, fg_file, bg_file):
     with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
       for i, l in enumerate(f):
          seq = l.rstrip()
@@ -79,7 +115,7 @@ class TFInfo:
            if (d <= 1) and (rd <= 1):
              print >>g1, i
            
-  def gen_fg_parts(self, seq_file, sid_file, motif, parts_file):
+  def gen_fg_parts_orig(self, seq_file, sid_file, motif, parts_file):
     with open(parts_file, "w") as g:
       for i, seq in filterSeq(seq_file, sid_file):
          #seq = seq[2:-2]
@@ -90,6 +126,38 @@ class TFInfo:
          pos = [x + self.lbc_len for x in pos]
          rpos = [x + self.rbc_len for x in rpos]
          print >>g, i, len(pos), len(rpos), ",".join([str(x) for x in pos+rpos])
+ 
+  def gen_fg_parts_all_d1_hamming_nbr(self, seq_file, sid_file, motif, parts_file):
+    with open(parts_file, "w") as g:
+      for i, seq in filterSeq(seq_file, sid_file):
+         #seq = seq[2:-2]
+         seq = seq[self.lbc_len : -self.rbc_len]
+         rev = rev_comp(seq)
+         pos = find_all_occur_hamming_nbr(seq, motif, 1)
+         rpos = find_all_occur_hamming_nbr(rev, motif, 1)
+         pos = [x + self.lbc_len for x in pos]
+         rpos = [x + self.rbc_len for x in rpos]
+         print >>g, i, len(pos), len(rpos), ",".join([str(x) for x in pos+rpos])
+
+ 
+  def gen_fg_parts(self, seq_file, sid_file, nbr_file, motif, parts_file):
+    d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
+    d1_nbrs.append(motif)
+    d1_nbrs = list(set(d1_nbrs))
+    with open(parts_file, "w") as g:
+      for i, seq in filterSeq(seq_file, sid_file):
+         #seq = seq[2:-2]
+         seq = seq[self.lbc_len : -self.rbc_len]
+         rev = rev_comp(seq)
+         pos = []
+         rpos = []
+         for x in d1_nbrs:
+           pos += find_all_occur(seq, x)
+           rpos += find_all_occur(rev, x)
+         pos = [x + self.lbc_len for x in sorted(pos)]
+         rpos = [x + self.rbc_len for x in sorted(rpos)]
+         print >>g, i, len(pos), len(rpos), ",".join([str(x) for x in pos+rpos])
+
 
   def discretize_shape(self, shape_info, shape_file, discrete_file):
     with open(discrete_file, "w") as g:
@@ -132,7 +200,7 @@ class TFInfo:
         for i in range(num_forward):
           pos = int(positions[i])
           #print '->', pos, seq[pos:pos+len(motif)]
-          assert(seq[pos:pos+len(motif)] == motif)
+          assert(hamming_single(seq[pos:pos+len(motif)], motif) <= 1)
           self.print_shape_window(shape, seq_id, pos, len(motif), shape_length, lflank, rflank, shape_info.skip, count, g)
   
         shape = shape[::-1]
@@ -140,7 +208,7 @@ class TFInfo:
         for i in range(num_forward, len(positions)):
           pos = int(positions[i])
           #print '<-', pos, rev[pos:pos+len(motif)]
-          assert(rev[pos:pos+len(motif)] == motif)
+          assert(hamming_single(rev[pos:pos+len(motif)], motif) <= 1)
           self.print_shape_window(shape, seq_id, pos, len(motif), shape_length, lflank, rflank, shape_info.skip, count, g)
  
   def gen_bg_shapemers(self, shape_info, shape_length, shape_file, count_file, sid_file, shapemer_file):

@@ -90,9 +90,9 @@ def find_all_occur_hamming_nbr(seq, pat, hd):
   n = len(seq)
   k = len(pat)
   pos_dist = [(i,hamming_single(seq[i:i+k], pat)) for i in range(n-k+1)]
-  print pos_dist
+  #print pos_dist
   pos_dist = filter(lambda x: x[1] <= hd, pos_dist)
-  print pos_dist
+  #print pos_dist
   return [x[0] for x in pos_dist]
 
 def unzip_seq_filter_N_old(in_file, seq_file, count_file):

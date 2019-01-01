@@ -21,7 +21,7 @@ def task_preprocess():
   for task in task_infos:
     for cycle in task.cycles:
       fastq_file = "%s/%s.fastq.gz" % (download_dir, task.accession)
-      seq_file = "%s/%s" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+      seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
       count_file = "%s.cnt" % (seq_file)
       ensure_dir(seq_file)
       yield {
@@ -38,7 +38,7 @@ def task_get_shape():
     for shape_type in shapes:
       for cycle in task.cycles:
           seq_file = task.tf_info.getSequenceFile(cycle)
-          input_file = "%s/%s" % (top_data_dir, seq_file)
+          input_file = "%s/%s" % (orig_data_dir, seq_file)
           output_file = input_file + "." + shape_type
           yield {
             'name'      : output_file,
@@ -57,8 +57,8 @@ def task_discretize_shape():
         shape_levels_str = shinfo.getLevelsStr()
         for cycle in task.cycles:
             seq_file = task.tf_info.getSequenceFile(cycle)
-            input_file = "%s/%s.%s" % (top_data_dir, seq_file, shape_type)
-            output_file = "%s/%s" % (top_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
+            input_file = "%s/%s.%s" % (orig_data_dir, seq_file, shape_type)
+            output_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
             yield {
               'name'      : output_file,
               'actions'   : [(task.tf_info.discretize_shape, [shinfo, input_file, output_file])],
@@ -72,13 +72,15 @@ def task_partition():
   """ Partition aptamer sequences into foreground and background based on distance from MOTIF """
   for task in task_infos:
     for cycle in task.cycles:
-      seq_file = "%s/%s" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+      seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
       for motif, dist in izip(task.motifs, task.distances):
           fg_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
           bg_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
+          nbr_file = "%s/%s.seq%dmer.enr.nbr" % (seqmer_data_dir, task.tf_info.getSequenceFile(cycle), len(motif))
+          ensure_dir(fg_file)
           yield {
             'name'      : ':'.join([seq_file, motif, str(dist)]),
-            'actions'   : [(task.tf_info.partition_aptamers, [seq_file, motif, dist, fg_file, bg_file])],
+            'actions'   : [(task.tf_info.partition_aptamers, [seq_file, motif, dist, nbr_file, fg_file, bg_file])],
             'file_dep'  : [seq_file],
             'targets'   : [fg_file, bg_file],
             'clean'     : True,
@@ -90,13 +92,14 @@ def task_get_fg_parts():
   for task in task_infos:
     for lflank, rflank in flank_configs:
       for cycle in task.cycles:
-        seq_file = "%s/%s" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+        seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
         for motif, dist in izip(task.motifs, task.distances):
             fg_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
             parts_file = "%s/%s" % (top_data_dir, task.tf_info.getFgPartsFile(cycle, motif, dist, lflank, rflank))
+            nbr_file = "%s/%s.seq%dmer.enr.nbr" % (seqmer_data_dir, task.tf_info.getSequenceFile(cycle), len(motif))
             yield {
               'name'      : parts_file,
-              'actions'   : [(task.tf_info.gen_fg_parts, [seq_file, fg_file, motif, parts_file])],
+              'actions'   : [(task.tf_info.gen_fg_parts, [seq_file, fg_file, nbr_file, motif, parts_file])],
               'file_dep'  : [seq_file, fg_file],
               'targets'   : [parts_file],
               'clean'     : True,
@@ -111,8 +114,8 @@ def task_get_fg_shapemers():
           shinfo = shape_info[levels_type][shape_type]
           shape_levels_str = shinfo.getLevelsStr()
           for cycle in task.cycles:
-            seq_file = "%s/%s" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
-            shape_file = "%s/%s" % (top_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
+            seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
+            shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
             count_file = "%s.cnt" % (seq_file)
             for motif, dist in izip(task.motifs, task.distances):
                 context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
@@ -135,8 +138,8 @@ def task_get_bg_shapemers():
         shinfo = shape_info[levels_type][shape_type]
         shape_levels_str = shinfo.getLevelsStr()
         for cycle in task.cycles:
-          seq_file = "%s/%s" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
-          shape_file = "%s/%s" % (top_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
+          seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
+          shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
           count_file = "%s.cnt" % (seq_file)
           for motif, dist in izip(task.motifs, task.distances):
               context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
@@ -201,7 +204,7 @@ def task_get_fg_coverage():
                 shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
                 cov_file = shapemer_file + ".cov"
                 context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
-                count_file = "%s/%s.cnt" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+                count_file = "%s/%s.cnt" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
                 yield {
                   'name'      : cov_file,
                   'actions'   : [(getCoverage, [context_file, count_file, shapemer_file, cov_file])],
@@ -222,7 +225,7 @@ def task_get_bg_coverage():
                 shapemer_file = "%s/%s" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
                 cov_file = shapemer_file + ".cov"
                 context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
-                count_file = "%s/%s.cnt" % (top_data_dir, task.tf_info.getSequenceFile(cycle))
+                count_file = "%s/%s.cnt" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
                 yield {
                   'name'      : cov_file,
                   'actions'   : [(getCoverage, [context_file, count_file, shapemer_file, cov_file])],

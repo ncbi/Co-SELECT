@@ -3,8 +3,8 @@ require(plyr, quietly=TRUE)
 source("results_scripts/tf_utils.R")
 #source("results_scripts/params_config.R")
 
-top_data_dir <- '../data'
-top_res_dir <- '../results'
+top_data_dir <- '.'
+top_res_dir <- '.'
 #SPDEF,TCATTG20NCG,ETS,,1;2;3;4,Yes,GGAT;GNAA,GGAA,1,1
 #ARNTL,TCAAAA20NCG,bHLH,,1;2;3;4,No,,CACGTG,1,1
 
@@ -61,6 +61,7 @@ rflank = as.numeric(args[15])
 en_th = args[16]
 top_res_dir = args[17]
 shape_levels = args[18]
+top_data_dir = args[19]
 
 ENRICHMENT_THRESHOLD <<- as.numeric(en_th)
   

@@ -6,7 +6,9 @@ tf_info_file              = './tf_inventory_jolma_ronshamir.csv'
 tf_motif_file             = './tf_coremotif.csv'
 tf_run_coselect_file      = './tf_run_coselect.csv'
 
-top_data_dir              = '../data'
+orig_data_dir             = '../data'
+seqmer_data_dir           = '../seqmerdata'
+top_data_dir              = '../derived'
 top_results_dir           = '../results'
 download_dir              = '../downloads'
 
