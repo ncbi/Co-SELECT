@@ -13,11 +13,11 @@ from round0_scripts.simple_predict import *
 DOIT_CONFIG = {'check_file_uptodate': 'timestamp', 'verbosity':2}
 
 class TaskInfo:
-  def __init__(self, tf, primer, family, accession, motifs, cycles, distance_thresholds):
+  def __init__(self, tf, primer, family, accessions, motifs, cycles, distance_thresholds):
     self.tf = tf
     self.primer = primer
     self.family = family
-    self.accession = accession
+    self.accessions = accessions
     self.motifs = motifs
     self.cycles = cycles
     self.shape_length = 6  # len(motif) + 2
@@ -33,8 +33,11 @@ accession = pd.read_csv(nonzero_accession_file)
 
 tfs = tf_info.merge(tf_motif).merge(tf_run)
 tfs['distance'] = tfs['motif'].str.len() - 2
-tfs['final'] = 4
-tfs = tfs.merge(accession, left_on=['tf', 'primer', 'final'], right_on=['tf', 'primer', 'cycle'])
+tfs['accessions'] = ''
+for cycle in cycles:
+  tfs['cycle'] = cycle
+  tfs['accessions'] = tfs['accessions'] + ',' + tfs['cycle'].map(lambda x:str(x)) + ':' + tfs.merge(accession)['accession']
+tfs['accessions'] = tfs['accessions'].map(lambda x: {int(y.split(':')[0]):y.split(':')[1] for y in x.split(',')[1:]})
 
 print tfs
 

@@ -65,8 +65,8 @@ mytheme <- theme(legend.position="top",
 
 plotEnrichedShapes <- function(df) {
   #print(df)
-  print('in plotenrich')
-  print(unique(df$shape))
+  #print('in plotenrich')
+  #print(unique(df$shape))
   p <- ggplot(df, aes(x=x, y=promiscuity, fill=promiscuous)) +
         #facet_wrap(~shape, scales='free',ncol=2) +
         facet_wrap(~shape, ncol=2) +
@@ -91,34 +91,37 @@ getPlotWithInset <- function(all) {
   all <- merge(all, tmp, all.x=TRUE, id.vars=c('shape'))
 
   all <- ddply(all, .(shape), transform, xmin=max(xmin), ymin=max(ymin))
-  print(length(unique(all$en_th)))
-  print(unique(all$en_th))
+  #print(length(unique(all$en_th)))
+  #print(unique(all$en_th))
   if (length(unique(all$en_th)) > 1 ) {
   all$promiscuous <- paste(all$promiscuous, all$en_th, sep=' @ ')
   all$promiscuous <- factor(all$promiscuous, levels=c('High @ 1.10', 'High @ 1.20', 'Low @ 1.10', 'Low @ 1.20'), ordered=TRUE)
   } else {
   all$promiscuous <- factor(all$promiscuous, levels=c('High', 'Low'), ordered=TRUE)
   }
+  #print(all)
   
   limits <- merge(all, inset, all.x=TRUE) %>% 
             group_by(shape) %>%
             filter(promiscuous %in% c('High @ 1.10', 'High @ 1.20', 'High')) %>%
             summarize(xmax=max(x)+1)
   
-  print('before calling plotenrich')
-  print(unique(all$shape))
+  #print('before calling plotenrich')
+  #print(unique(all$shape))
   p <-  plotEnrichedShapes(all)
+
+  with_limits <- merge(all,limits)
+  with_limits <- with_limits[with_limits$x < with_limits$xmax, ]
   
-  insets <- dlply(all, c("shape"), function(d){
-      with_limits <- merge(d,limits) %>% filter(x < xmax)
-      annotation_custom2(grob = ggplotGrob(plotEnrichedShapes(with_limits) +
+  insets <- dlply(with_limits, c("shape"), function(d){
+      annotation_custom2(grob = ggplotGrob(plotEnrichedShapes(d) +
                                    geom_text(aes(label=kmer), angle=90, y=-Inf, hjust=-0.2,family='Courier') +
                                    scale_y_continuous(position = "right")+
           theme(legend.position="none") +
                                    theme(axis.title.x = element_blank(), axis.title.y = element_blank(),
                                         strip.text.x = element_blank())), 
-        data = with_limits,
-        xmin=max(with_limits$xmin), xmax=Inf, ymin=max(with_limits$ymin), ymax=Inf)
+        data = d,
+        xmin=max(d$xmin), xmax=Inf, ymin=max(d$ymin), ymax=Inf)
       })
   
   p <- p + insets
@@ -138,16 +141,17 @@ print(infile)
 
 all <- read.csv(infile, stringsAsFactors=F, colClasses=c("en_th"="character"))
 
-print(all)
-
-print(all[all$en_th == '1.20', ])
+#print(all)
+#print(all[all$en_th == '1.20', ])
 
 
 all <- merge(all, inset, all.x = TRUE)
 all <- ddply(all, .(shape, kmer, en_th), transform, promiscuous = ifelse(promiscuity > height, 'High', 'Low'))
 all$shape <- factor(all$shape, levels=c('MGW', 'HelT', 'ProT', 'Roll'))
 
-write.csv(all[all$en_th=='1.20' & all$promiscuous == 'Yes', c('shape', 'kmer', 'promiscuous')], file=outfile, row.names=FALSE)
+#print(all)
+
+write.csv(all[all$en_th=='1.20' & all$promiscuous == 'high', c('shape', 'kmer', 'promiscuous')], file=outfile, row.names=FALSE)
 
 
 p <- getPlotWithInset(all)

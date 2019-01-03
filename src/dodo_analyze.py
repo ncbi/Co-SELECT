@@ -7,20 +7,21 @@ task_infos = []
 for i, row in tfs.iterrows():
   tf = row['tf']
   bc = row['primer']
-  cycles = [row['final']] #[4] #[int(x) for x in row['cycles'].split(';')]
+  #cycles = [row['final']] #[4] #[int(x) for x in row['cycles'].split(';')]
   #cycles = [1,2,3,4]
   motif = row['motif']
   family = row['family']
   dist = row['distance']
-  accession = row['accession']
-  task_infos.append(TaskInfo(tf, bc, family, accession, [motif], cycles, [dist]))
+  accessions = row['accessions']
+  task_infos.append(TaskInfo(tf, bc, family, accessions, [motif], cycles, [dist]))
 
 
 def task_preprocess():
   """ Unzip fastq files, keep only sequence info of those containing only ACGT """
   for task in task_infos:
     for cycle in task.cycles:
-      fastq_file = "%s/%s.fastq.gz" % (download_dir, task.accession)
+      fastq_file = "%s/%s.fastq.gz" % (download_dir, task.accessions[cycle])
+      print(fastq_file)
       seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
       count_file = "%s.cnt" % (seq_file)
       ensure_dir(seq_file)
@@ -80,7 +81,7 @@ def task_partition():
           ensure_dir(fg_file)
           yield {
             'name'      : ':'.join([seq_file, motif, str(dist)]),
-            'actions'   : [(task.tf_info.partition_aptamers, [seq_file, motif, dist, nbr_file, fg_file, bg_file])],
+            'actions'   : [(task.tf_info.partition_aptamers, [fg_type, seq_file, motif, dist, nbr_file, fg_file, bg_file])],
             'file_dep'  : [seq_file],
             'targets'   : [fg_file, bg_file],
             'clean'     : True,
@@ -99,7 +100,7 @@ def task_get_fg_parts():
             nbr_file = "%s/%s.seq%dmer.enr.nbr" % (seqmer_data_dir, task.tf_info.getSequenceFile(cycle), len(motif))
             yield {
               'name'      : parts_file,
-              'actions'   : [(task.tf_info.gen_fg_parts, [seq_file, fg_file, nbr_file, motif, parts_file])],
+              'actions'   : [(task.tf_info.gen_fg_parts, [fg_type, seq_file, fg_file, nbr_file, motif, parts_file])],
               'file_dep'  : [seq_file, fg_file],
               'targets'   : [parts_file],
               'clean'     : True,

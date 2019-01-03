@@ -86,6 +86,9 @@ if (length(args) > 11) {
 if (length(args) > 12) {
   top_data_dir =args[13]
 }
+if (length(args) > 13) {
+  probability_dir =args[14]
+}
 
 ENRICHMENT_THRESHOLD <<- as.numeric(en_th)
 
@@ -101,5 +104,5 @@ makeBoth2 <- function(x, y) {
   return(na.omit(c(t[3],t[1]))[1])
 }
 
-getCrossSummary(top_data_dir, top_res_dir, tf, primer, family, motif, dist, cycle, tf, primer, family, motif, dist, cycle, shape, lflank, rflank, shape_levels)
+getCrossSummary(top_data_dir, top_res_dir, probability_dir, tf, primer, family, motif, dist, cycle, tf, primer, family, motif, dist, cycle, shape, lflank, rflank, shape_levels)
 

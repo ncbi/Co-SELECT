@@ -136,16 +136,18 @@ is.true <- function(x) {
 }
 
 
-getEstimate <- function(ctx, shape, motif, dist, lflank, rflank, shape_levels, topdir) {
+getEstimate <- function(ctx, shape, motif, dist, lflank, rflank, shape_levels, probability_dir) {
+  #print(paste('probability_dir', probability_dir))
   file_estimate <- getProbFile(ctx, shape, motif, dist, lflank, rflank, shape_levels)
-  path_estimate <- paste(topdir, 'simple_predict', file_estimate, sep='/')
+  path_estimate <- paste(probability_dir, file_estimate, sep='/')
   cn_estimated <- paste0(ctx, '0.estimated')
   df <- read.table(path_estimate, header=FALSE, col.names=c('kmer', 'skip', cn_estimated),
                    colClasses=c('character', 'NULL', 'numeric'))
   return(df)
 }
 
-getEnrichmentInfo <-function(topdir, tf, primer, family, cycle, ctx, shape, motif, dist, lflank, rflank, shape_levels) {
+getEnrichmentInfo <-function(topdir, probdir, tf, primer, family, cycle, ctx, shape, motif, dist, lflank, rflank, shape_levels) {
+  #print(paste('probdir', probdir))
   datadir = paste(topdir, family, tf, primer, sep='/')
   fg <- getInfo(datadir, cycle, ctx, shape, motif, dist, lflank, rflank, shape_levels)
 
@@ -155,7 +157,7 @@ getEnrichmentInfo <-function(topdir, tf, primer, family, cycle, ctx, shape, moti
   cn_kmer <- 'kmer'
   cn_fg0_estimated <- paste0(ctx, '0.estimated')
 
-  fg0.est <- getEstimate(ctx, shape, motif, dist, lflank, rflank, shape_levels, topdir)
+  fg0.est <- getEstimate(ctx, shape, motif, dist, lflank, rflank, shape_levels, probdir)
 
   cn_fg_frac <- paste0(ctx, cycle, '.frac')
   cn_fg_cov <- paste0(ctx, cycle, '.cov')
@@ -192,7 +194,7 @@ getPromiscuousShapes <- function(shape) {
 }
 
 
-getCrossSummary <-function(top_data_dir, top_res_dir, tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape, lflank, rflank, shape_levels) {
+getCrossSummary <-function(top_data_dir, top_res_dir, probdir, tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape, lflank, rflank, shape_levels) {
 
   #print(paste(c('top_data_dir', 'top_res_dir', 'tf1', 'primer1', 'family1', 'motif1', 'dist1', 'cycle1', 'tf2', 'primer2', 'family2', 'motif2', 'dist2', 'cycle2', 'shape', 'lflank', 'rflank', 'shape_levels'), c(top_data_dir, top_res_dir, tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape, lflank, rflank, shape_levels)))
 
@@ -210,8 +212,8 @@ getCrossSummary <-function(top_data_dir, top_res_dir, tf1, primer1, family1, mot
   path_enriched <- paste(top_res_dir, file_enriched, sep='/')
   path_fisher <- paste(top_res_dir, file_fisher, sep='/')
 
-  fg <- getEnrichmentInfo(top_data_dir, tf1, primer1, family1, cycle1, 'fg', shape, motif1, dist1, lflank, rflank, shape_levels)
-  bg <- getEnrichmentInfo(top_data_dir, tf2, primer2, family2, cycle2, 'bg', shape, motif2, dist2, lflank, rflank, shape_levels)
+  fg <- getEnrichmentInfo(top_data_dir, probdir, tf1, primer1, family1, cycle1, 'fg', shape, motif1, dist1, lflank, rflank, shape_levels)
+  bg <- getEnrichmentInfo(top_data_dir, probdir, tf2, primer2, family2, cycle2, 'bg', shape, motif2, dist2, lflank, rflank, shape_levels)
 
   #print(fg)
   #print(bg)

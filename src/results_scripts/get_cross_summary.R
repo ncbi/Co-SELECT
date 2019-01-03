@@ -62,6 +62,7 @@ en_th = args[16]
 top_res_dir = args[17]
 shape_levels = args[18]
 top_data_dir = args[19]
+probability_dir = args[20]
 
 ENRICHMENT_THRESHOLD <<- as.numeric(en_th)
   
@@ -94,4 +95,4 @@ dir.create(top_res_dir, showWarnings = FALSE, recursive = TRUE)
 ##print(nrow(tfs))
 ##print(nrow(cross))
 
-getCrossSummary(top_data_dir, top_res_dir, tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape, lflank, rflank, shape_levels)
+getCrossSummary(top_data_dir, top_res_dir, probability_dir, tf1, primer1, family1, motif1, dist1, cycle1, tf2, primer2, family2, motif2, dist2, cycle2, shape, lflank, rflank, shape_levels)

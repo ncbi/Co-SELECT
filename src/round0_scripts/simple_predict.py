@@ -14,8 +14,8 @@ import os
 #def getContextedShapemerCountFile(tf, primer, cycle, motif, lflank, rflank, ctx, shape):
 #  return getContextFile(tf, primer, cycle, motif, lflank, rflank, ctx) + '.' + shape  + '.mer.cnt'
 
-def getCycle0ProbFile(top_data_dir, ctx, shape, motif, dist, lflank, rflank, shape_levels_str):
-  fname = "%s/simple_predict/prob.%s.%s.%s.%s" % (top_data_dir, ctx, motif, shape, shape_levels_str)
+def getCycle0ProbFile(probability_dir, ctx, shape, motif, dist, lflank, rflank, shape_levels_str):
+  fname = "%s/prob.%s.%s.%s.%s" % (probability_dir, ctx, motif, shape, shape_levels_str)
   fname += ".d%s" % (dist)
   if ctx == 'fg':
     fname += ".l%d.r%d" % (lflank, rflank)

@@ -59,8 +59,11 @@ class TFInfo:
          if (d >= distance_threshold) and (rd >= distance_threshold):
            print >>g1, i
  
-  def partition_aptamers(self, seq_file, motif, distance_threshold, nbr_file, fg_file, bg_file):
-    d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
+  def partition_aptamers(self, fg_type, seq_file, motif, distance_threshold, nbr_file, fg_file, bg_file):
+    if fg_type == 'd1enriched':
+      d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
+    else:
+      d1_nbrs = []
     with open(seq_file) as f, open(fg_file, "w") as g0, open(bg_file, "w") as g1:
       for i, l in enumerate(f):
          seq = l.rstrip()
@@ -74,10 +77,14 @@ class TFInfo:
          elif (d >= distance_threshold) and (rd >= distance_threshold):
            print >>g1, i
          else:
-           d = min([hamming_all(seq, nbr) for nbr in d1_nbrs])
-           rd = min([hamming_all(rev, nbr) for nbr in d1_nbrs])
-           if (d == 0) or (rd == 0):
-             print >>g0, i
+           if fg_type == 'd1all':
+             if (d == 1) or (rd == 1):
+               print >>g0, i
+           elif fg_type == 'd1enriched':
+             d = min([hamming_all(seq, nbr) for nbr in d1_nbrs])
+             rd = min([hamming_all(rev, nbr) for nbr in d1_nbrs])
+             if (d == 0) or (rd == 0):
+               print >>g0, i
 
 
   def partition_aptamers_orig(self, seq_file, motif, distance_threshold, fg_file, bg_file):
@@ -140,20 +147,28 @@ class TFInfo:
          print >>g, i, len(pos), len(rpos), ",".join([str(x) for x in pos+rpos])
 
  
-  def gen_fg_parts(self, seq_file, sid_file, nbr_file, motif, parts_file):
-    d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
-    d1_nbrs.append(motif)
-    d1_nbrs = list(set(d1_nbrs))
+  def gen_fg_parts(self, fg_type, seq_file, sid_file, nbr_file, motif, parts_file):
+    print fg_type
+    if fg_type == 'd1enriched':
+      d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
+      d1_nbrs = list(set(d1_nbrs) - set([motif]))
+    else:
+      d1_nbrs = []
     with open(parts_file, "w") as g:
       for i, seq in filterSeq(seq_file, sid_file):
          #seq = seq[2:-2]
          seq = seq[self.lbc_len : -self.rbc_len]
          rev = rev_comp(seq)
-         pos = []
-         rpos = []
-         for x in d1_nbrs:
-           pos += find_all_occur(seq, x)
-           rpos += find_all_occur(rev, x)
+         if fg_type == 'd1all':
+           pos = find_all_occur_hamming_nbr(seq, motif, 1)
+           rpos = find_all_occur_hamming_nbr(rev, motif, 1)
+         else: # both for d0 and d1enriched
+           pos = find_all_occur(seq, motif)
+           rpos = find_all_occur(rev, motif)
+         if fg_type == 'd1enriched':
+           for x in d1_nbrs:
+             pos += find_all_occur(seq, x)
+             rpos += find_all_occur(rev, x)
          pos = [x + self.lbc_len for x in sorted(pos)]
          rpos = [x + self.rbc_len for x in sorted(rpos)]
          print >>g, i, len(pos), len(rpos), ",".join([str(x) for x in pos+rpos])
