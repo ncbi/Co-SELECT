@@ -1,12 +1,17 @@
 import pandas as pd
 
 def get_col_widths(dataframe):
-    # Then, we concatenate this to the max of the lengths of column name and its values for each column, left to right
-    return [max([len(str(s))+3 for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
+  # First we find the maximum length of the index columns   
+  idx_max = [max([len(str(s)) for s in dataframe.index.get_level_values(idx)] + [len(str(idx))]) for idx in dataframe.index.names]
+  # Then, we concatenate this to the max of the lengths of column name and its values for each column, left to right
+  return idx_max + [max([len(str(s)) for s in dataframe[col].values] + \
+                        [len(str(x)) for x in col] if dataframe.columns.nlevels > 1 else [len(str(col))]) for col in dataframe.columns]
 
-def set_width(writer, sheet, df):
+def save_dataframe(writer, sheet, df):
+  df.to_excel(writer, sheet_name = sheet)
   for j, width in enumerate(get_col_widths(df)):
     writer.sheets[sheet].set_column(j, j, width)
+  writer.sheets[sheet].freeze_panes(df.columns.nlevels+1, df.index.nlevels)
 
 
 def get_enriched_shapemers_in_excel(infile, motif_file, xlsfile, csvfile):
@@ -22,13 +27,14 @@ def get_enriched_shapemers_in_excel(infile, motif_file, xlsfile, csvfile):
   combined = combined.rename(index=str, columns={"primer": "barcode"})
   combined.drop('label', axis=1).to_csv(csvfile, index=False)
   combined = combined.set_index(['family', 'tf', 'barcode', 'motif', 'threshold', 'shapemer','shape'])
-  combined = combined.unstack(fill_value='').unstack(fill_value='').unstack(fill_value='')
+  combined = combined.unstack().unstack().unstack()
   for i, shape in enumerate(shapes):
     df = combined.iloc[:, combined.columns.get_level_values('shape')==shape]
-    df.to_excel(writer, sheet_name=shape)
+    save_dataframe(writer, shape, df)
     res_pitx3 =  df[df.index.get_level_values('tf').isin(['PITX3', 'GBX1'])]
     if not res_pitx3.empty:
-      res_pitx3.to_excel(writer, sheet_name="%s-PITX3" % shape)
+      sheet = "%s-PITX3" % shape
+      save_dataframe(writer, sheet, res_pitx3)
   writer.save()
 
 
@@ -48,7 +54,7 @@ def get_detailed_results_in_excel(infile, motif_file, outfile, rename_dict):
   combined = combined.unstack().unstack()
   for i, shape in enumerate(shapes):
     df = combined.iloc[:, combined.columns.get_level_values('shape')==shape]
-    df.to_excel(writer, sheet_name=shape)
-  combined.to_excel(writer, sheet_name='AllShapes')
+    save_dataframe(writer, shape, df)
+  save_dataframe(writer, 'AllShapes', combined)
   writer.save()
 

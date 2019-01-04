@@ -22,9 +22,9 @@ def task_plot_qvalues():
     for cycle in cycles:
       infile = '%s/dqvalue.%d.l%d.r%d.csv' % (top_results_dir, cycle, lflank, rflank)
       shape_levels_file = '%s/shape_levels.csv' % (top_results_dir)
-      selected_pdf = '%s/fig_qvalue_selected_cycle%d.pdf' % (top_results_dir, cycle)
-      separate_pdf = '%s/fig_qvalue_separate_family_cycle%d.pdf' % (top_results_dir, cycle)
-      combined_pdf = '%s/fig_qvalue_combined_family_cycle%d.pdf' % (top_results_dir, cycle)
+      selected_pdf = '%s/fig_qvalue_selected_cycle%d_%s.pdf' % (top_results_dir, cycle, fg_type)
+      separate_pdf = '%s/fig_qvalue_separate_family_cycle%d_%s.pdf' % (top_results_dir, cycle, fg_type)
+      combined_pdf = '%s/fig_qvalue_combined_family_cycle%d_%s.pdf' % (top_results_dir, cycle, fg_type)
       yield {
         'name'      : selected_pdf,
         'actions'   : ["results_scripts/plot_qvalue.R %s %s %s %s %s" % (infile, shape_levels_file, selected_pdf, separate_pdf, combined_pdf)],
@@ -40,7 +40,7 @@ def task_get_fdr_table():
     for cycle in cycles:
       infile = '%s/dqvalue.%d.l%d.r%d.csv' % (top_results_dir, cycle, lflank, rflank)
       table_tex = '%s/table_significant_tfs_at_fdr_cycle%d.tex' % (top_results_dir,cycle)
-      table_pdf = '%s/table_significant_tfs_at_fdr_temp_cycle%d.pdf' % (top_results_dir,cycle)
+      table_pdf = '%s/table_significant_tfs_at_fdr_cycle%d_%s.pdf' % (top_results_dir,cycle, fg_type)
       yield {
         'name'      : table_tex,
         'actions'   : ["results_scripts/compute_fdr_table.py %s %s %s" % (infile, table_tex, table_pdf)],
@@ -81,7 +81,7 @@ def task_get_enriched_shapemers_in_excel():
     for ltype in discrete_levels_type:
       for cycle in cycles:
         infile = '%s/%s/denriched_same.%d.l%d.r%d.csv' % (top_results_dir, ltype, cycle, lflank, rflank)
-        outfile = '%s/enriched_shapemers_%s_cycle%d.l%d.r%d.xlsx' % (top_results_dir, ltype, cycle, lflank, rflank)
+        outfile = '%s/enriched_shapemers_%s_cycle%d_%s.xlsx' % (top_results_dir, ltype, cycle, fg_type)
         csvfile = '%s/table_enriched_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, ltype, cycle, lflank, rflank)
         yield {
           'name'      : outfile,
@@ -140,7 +140,7 @@ def task_get_detailed_results_in_excel():
   for lflank, rflank in flank_configs:
     for cycle in cycles:
       infile = '%s/dfisher_same.%d.l%d.r%d.csv' % (top_results_dir, cycle, lflank, rflank)
-      outfile = '%s/detailed_results_cycle%d.l%d.r%d.xlsx' % (top_results_dir, cycle, lflank, rflank)
+      outfile = '%s/detailed_results_cycle%d_%s.xlsx' % (top_results_dir, cycle, fg_type)
       yield {
         'name'      : outfile,
         'actions'   : [(get_detailed_results_in_excel, [infile, tf_motif_file, outfile, level_names])],
@@ -156,9 +156,9 @@ def task_cluster_by_enriched_shapemers():
       for cycle in cycles:
         promiscuous = '%s/promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
         infile = '%s/table_enriched_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
-        heatmap = '%s/fig_heatmap_shapemers_%s.cycle%d.l%d.r%d.pdf' % (top_results_dir, levels_type, cycle, lflank, rflank)
+        heatmap = '%s/fig_heatmap_shapemers_%s_cycle%d_%s.pdf' % (top_results_dir, levels_type, cycle, fg_type)
         pca_csv = '%s/pca_shapemers_%s.cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
-        pca_pdf = '%s/fig_pca_shapemers_%s.cycle%d.l%d.r%d.pdf' % (top_results_dir, levels_type, cycle, lflank, rflank)
+        pca_pdf = '%s/fig_pca_shapemers_%s_cycle%d_%s.pdf' % (top_results_dir, levels_type, cycle, fg_type)
         yield {
           'name'      : pca_csv,
           'actions'   : ["results_scripts/cluster_by_shapemers.py %s %s %s %s" % (infile, promiscuous, heatmap, pca_csv)],

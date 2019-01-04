@@ -4,7 +4,6 @@ require(ggplot2)
 require(ggthemes)
 require(gridExtra)
 require(grid)
-require(data.table)
 require(dplyr)
 
 inset <- read.csv(text='en_th, shape, height, xmin, ymin
@@ -100,7 +99,7 @@ getPlotWithInset <- function(all) {
   all$promiscuous <- factor(all$promiscuous, levels=c('High', 'Low'), ordered=TRUE)
   }
   #print(all)
-  
+
   limits <- merge(all, inset, all.x=TRUE) %>% 
             group_by(shape) %>%
             filter(promiscuous %in% c('High @ 1.10', 'High @ 1.20', 'High')) %>%
@@ -149,7 +148,7 @@ all <- merge(all, inset, all.x = TRUE)
 all <- ddply(all, .(shape, kmer, en_th), transform, promiscuous = ifelse(promiscuity > height, 'High', 'Low'))
 all$shape <- factor(all$shape, levels=c('MGW', 'HelT', 'ProT', 'Roll'))
 
-#print(all)
+#print(head(all))
 
 write.csv(all[all$en_th=='1.20' & all$promiscuous == 'high', c('shape', 'kmer', 'promiscuous')], file=outfile, row.names=FALSE)
 

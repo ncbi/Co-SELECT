@@ -79,8 +79,8 @@ def task_plot_promiscuous():
       for cycle in cycles:
         infile = '%s/promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
         outfile = '%s/highly_promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
-        selected_pdf = '%s/fig_promiscuous_shapemers_%s_cycle%d.pdf' % (top_results_dir, levels_type, cycle)
-        combined_pdf = '%s/fig_promiscuous_shapemers_compare_threshold_%s_cycle%d.pdf' % (top_results_dir, levels_type, cycle)
+        selected_pdf = '%s/fig_promiscuous_shapemers_%s_cycle%d_%s.pdf' % (top_results_dir, levels_type, cycle, fg_type)
+        combined_pdf = '%s/fig_promiscuous_shapemers_compare_threshold_%s_cycle%d_%s.pdf' % (top_results_dir, levels_type, cycle, fg_type)
         yield {
           'name'      : selected_pdf,
           'actions'   : ["promiscuous_scripts/plot_promiscuous.R %s %s %s %s" % (infile, outfile, selected_pdf, combined_pdf)],
