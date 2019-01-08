@@ -12,6 +12,7 @@ library(ggrepel)
 args = commandArgs(trailingOnly=TRUE)
 
 pca <- read.csv(args[1], stringsAsFactors=F)
+pca$label <- ifelse(pca$tf == 'ISX', paste(pca$tf, pca$barcode, sep='.'), pca$tf)
 
 delta <- 0.1
 ymax <- max(pca$pca.two) + delta
@@ -64,8 +65,8 @@ ggplot() +
   geom_line(data = bhlh, aes(x = 0, y = ymax+1, linetype = subcategory)) +
 ## Add in your real plot goal  
   #geom_bar(data = services, aes(category, fill=subcategory)) +
-  geom_point(data = pca, aes(x=pca.one, y=pca.two, color=category, size = 5)) +
-  #geom_text_repel(data = pca, aes(x=pca.one, y=pca.two, label=subcategory)) +
+  geom_point(data = pca, aes(x=pca.one, y=pca.two, color=category), size = 5, alpha = 0.8) +
+  geom_text_repel(data = pca, aes(x=pca.one, y=pca.two, label=label), size = 1.5) +
 ## Remove the Fill legend  
   #scale_fill_hue(guide="none") +
   scale_alpha(guide="none") +

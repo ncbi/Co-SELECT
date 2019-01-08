@@ -31,7 +31,7 @@ for i, row in zdf.iterrows():
   motifs = [mo for mo, di in row['modist']]
   distances = [di for mo, di in row['modist']]
   print row['tf'], row['modist'], motifs, distances
-  task_infos.append(TaskInfo(tf, bc, 'NoFamily', accession, motifs, cycles, distances))
+  task_infos.append(TaskInfo(tf, bc, 'NoFamily', [accession], motifs, cycles, distances))
 
 
 #def task_preprocess():
@@ -98,7 +98,7 @@ def task_partition():
           ensure_dir(fg_file)
           yield {
             'name'      : ':'.join([seq_file, motif, str(dist)]),
-            'actions'   : [(task.tf_info.partition_aptamers, [seq_file, motif, dist, nbr_file, fg_file, bg_file])],
+            'actions'   : [(task.tf_info.partition_aptamers, [fg_type, seq_file, motif, dist, nbr_file, fg_file, bg_file])],
             'file_dep'  : [seq_file],
             'targets'   : [fg_file, bg_file],
             'clean'     : True,
@@ -117,7 +117,7 @@ def task_get_fg_parts():
             nbr_file = "%s/%s.seq%dmer.enr.nbr" % (seqmer_data_dir, task.tf_info.getSequenceFile(cycle), len(motif))
             yield {
               'name'      : parts_file,
-              'actions'   : [(task.tf_info.gen_fg_parts, [seq_file, fg_file, nbr_file, motif, parts_file])],
+              'actions'   : [(task.tf_info.gen_fg_parts, [fg_type, seq_file, fg_file, nbr_file, motif, parts_file])],
               'file_dep'  : [seq_file, fg_file],
               'targets'   : [parts_file],
               'clean'     : True,

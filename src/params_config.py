@@ -17,6 +17,7 @@ fg_type                   = 'd1enriched'
 fg_type                   = 'd0'
 
 cycles                    = [3, 4] if fg_type == 'd0' else [4]
+cycles                    = [4] if fg_type == 'd0' else [4]
 
 shapes                    = ["MGW", "ProT", "HelT", "Roll"]
 

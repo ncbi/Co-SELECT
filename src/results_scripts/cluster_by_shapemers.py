@@ -74,6 +74,8 @@ df3['pca.one'] = pca_result[:,0]
 df3['pca.two'] = pca_result[:,1] 
 df3['pca.three'] = pca_result[:,2]
 df3['family'] = df2.index.map(lambda x: x[0])
+df3['tf'] = df2.index.map(lambda x: x[1])
+df3['barcode'] = df2.index.map(lambda x: x[2])
 df3['motif'] = df2.index.map(lambda x: x[3])
 df3['subcategory'] = df2.index.map(lambda x: x[3] if x[3] in ['TAAA', 'TAAT', 'CGGAA', 'GGAAG', 'CACGTG', 'CATATG'] else 'Other')
 
