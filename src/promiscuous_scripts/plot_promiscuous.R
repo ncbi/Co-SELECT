@@ -150,7 +150,7 @@ all$shape <- factor(all$shape, levels=c('MGW', 'HelT', 'ProT', 'Roll'))
 
 #print(head(all))
 
-write.csv(all[all$en_th=='1.20' & all$promiscuous == 'high', c('shape', 'kmer', 'promiscuous')], file=outfile, row.names=FALSE)
+write.csv(all[all$promiscuous == 'High', c('shape', 'kmer', 'en_th')], file=outfile, row.names=FALSE)
 
 
 p <- getPlotWithInset(all)

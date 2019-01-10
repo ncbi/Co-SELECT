@@ -44,6 +44,7 @@ probability_dirs = {
 top_data_dir              = top_data_dirs[fg_type]
 probability_dir           = probability_dirs[fg_type]
 top_results_dir           = '../results/{}'.format(fg_type)
+top_seqlogo_dir           = '../seqlogos/{}'.format(fg_type)
 
 
 print top_data_dir

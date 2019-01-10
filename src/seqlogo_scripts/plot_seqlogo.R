@@ -1,51 +1,38 @@
-# Load the required packages
-require(ggplot2)
-require(ggseqlogo)
-require(plyr)
-require(dplyr)
-require(tidyr)
-require(rlist)
-require(gridExtra)
+#!/usr/bin/env Rscript
+require(optparse)
+source("seqlogo_scripts/common_funcs.R")
 
-pwms = read.csv('SEQLOGO/seqlogo_info_PITX3_TGCATC20NGA_NEW.csv', stringsAsFactors=F)
+
+option_list <- list( 
+    make_option(c('-i', "--in_file"), default="SEQLOGO/seqlogo_info_PITX3_TGCATC20NGA_NEW.csv", 
+        help = "Input file. [default \"%default\"]"),
+    make_option(c('-o', "--out_file"), default="logos.pdf", 
+        help = "Output file. [default \"%default\"]")
+    )
+
+# get command line options, if help option encountered print help and exit,
+# otherwise if options not found on command line then set defaults, 
+opt <- parse_args(OptionParser(option_list=option_list))
+
+
+pwms = read.csv(opt$in_file, stringsAsFactors=F)
+pwms = pwms[pwms$enrichment != "", ]
+pwms$promiscuity <- NULL
 pwms$cycle <- 4
 print(pwms)
 
+shapemers <- unique(pwms$shapemer)
 cycles <- unique(pwms$cycle)
-contexes <- unique(pwms$context)
+contexts <- unique(pwms$context)
 
-cs = make_col_scheme(
-       chars = c('A', 'C', 'G', 'T', 'U', 'X', 'B', 'D', 'E'),
-       groups = c('A', 'C', 'G', 'T', 'U', 'full', 'fgfull', 'motif-containing', 'motif-free'),
-       cols = c('#109648', '#255C99', '#F7B32B', '#D62839', '#D62839', 'white', 'green', 'blue', 'red'))
+p <- getLogoPlot(pwms)
+p <- p + facet_grid(shapemer + enrichment ~ context + cycle,
+                    labeller = labeller(enrichment = label_both, cycle = label_both))
 
+height = 1 + 2.5*length(shapemers)
+width = 1 + 3*length(contexts)*length(cycles)
 
-getPwm <- function(df) {
-  mat <- as.matrix(df[, !(names(df) %in% c('base'))])
-  if (all(mat == 0)) {
-    mat <- cbind(mat, c(1,0,0,0))
-  }
-  row.names(mat) <- df$base
-  mat
-}
+pdf(opt$out_file, height=height, width=width)
 
-pwms <- pwms %>%
-          group_by(shapemer, cycle, context) %>%
-          nest() %>%
-          mutate(name = paste(shapemer, cycle, context))
-
-mylist <- lapply(pwms$data, getPwm)
-names(mylist) <- pwms$name
-pwms$context <- ifelse(pwms$context == 'fg', 'motif-containing', 'motif-free')
-
-pwms$seq_group = factor(pwms$name, ordered=TRUE)
-
-
-d <- ggseqlogo(mylist, col_scheme=cs, ncol=length(contexes)*length(cycles)) + theme(panel.background = element_rect(fill = NA, color = "black")) +
-  ylim(0,2) +
-  geom_rect(data = pwms, aes(fill = context), xmin = -Inf,xmax = Inf, ymin = -Inf,ymax = Inf,alpha = 0.1) +
-  #ggtitle(paste(shape, 'shapemers for', tf, primer))+
-  scale_x_continuous(breaks=1:10, lim=c(0.5,10.5))
-
-print(d)
+print(p)
 
