@@ -1,11 +1,12 @@
 # Load the required packages
-require(ggplot2)
-require(spseqlogo)
-require(plyr)
-require(dplyr)
-require(tidyr)
-require(rlist)
-require(gridExtra)
+suppressMessages(require(ggplot2))
+suppressMessages(require(spseqlogo))
+suppressMessages(require(plyr))
+suppressMessages(require(dplyr))
+suppressMessages(require(tidyr))
+suppressMessages(require(rlist))
+suppressMessages(require(grid))
+suppressMessages(require(gridExtra))
 
 cs = make_col_scheme(
        chars = c('A', 'C', 'G', 'T', 'U', 'X', 'B', 'D', 'E'),
@@ -43,6 +44,7 @@ getLogoPlot <- function(pwms) {
          theme(legend.position='bottom', legend.box = "horizontal") +
          guides(fill=guide_legend(nrow=1,byrow=TRUE)) +
          geom_rect(data = pwms, aes(fill = context), xmin = -Inf,xmax = Inf, ymin = -Inf,ymax = Inf,alpha = 0.1) +
-         scale_x_continuous(breaks=1:seq_length, lim=c(0.5, seq_length + 0.5))
+         scale_x_continuous(breaks=1:seq_length, lim=c(0.5, seq_length + 0.5)) +
+         ylim(0,2)
 }
 

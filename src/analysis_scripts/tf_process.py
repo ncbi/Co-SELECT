@@ -17,7 +17,7 @@ class TFInfo:
     self.rbc_len = len(res.group(2))
     
   def getSequenceFile(self, cycle):
-    return "%s/%s/%s/%d.non" % (self.family, self.tf, self.primer, cycle)
+    return "%s/%s/%s/%d.non" % (self.family if cycle else 'NoFamily', self.tf if cycle else 'ZeroCycle', self.primer, cycle)
 
   def getDiscreteShapeFile(self, cycle, shape_type, shape_levels_str):
     return "%s.%s.%s" % (self.getSequenceFile(cycle), shape_type, shape_levels_str)

@@ -44,6 +44,8 @@ parser.add_argument("cycle",    type = int, help = "SELEX round")
 parser.add_argument("orig_dir", help = "top directory for original sequence files")
 parser.add_argument("data_dir", help = "top directory for derived files")
 parser.add_argument("res_dir",  help = "top results directory")
+parser.add_argument("enrich_file",  help = "CSV containing enriched shapemers")
+parser.add_argument("promiscuous_file",  help = "CSV containing promiscuous shapemers")
 parser.add_argument("out_file", help = "file in which the output pwm would be saved")
 opt = parser.parse_args()
 
@@ -55,6 +57,8 @@ cycle = opt.cycle
 orig_data_dir = opt.orig_dir
 top_data_dir = opt.data_dir
 top_results_dir = opt.res_dir
+enrich_file = opt.enrich_file
+promiscuous_file = opt.promiscuous_file
 out_file = opt.out_file
 
 
@@ -94,14 +98,14 @@ debug('bg_file')
 debug('parts_file')
 
 
-enrich_file = '/'.join([top_results_dir, levels_type, threshold, info.family, info.tf, info.primer, '.'.join(['enriched', info.tf, info.primer, shape_type, str(cycle), motif, str(lflank), str(rflank), 'csv'])])
+#enrich_file = '/'.join([top_results_dir, levels_type, threshold, info.family, info.tf, info.primer, '.'.join(['enriched', info.tf, info.primer, shape_type, str(cycle), motif, str(lflank), str(rflank), 'csv'])])
 
 enr = pd.read_csv(enrich_file).sort_values(by='bg4.en.rank')
 enr = enr[enr.label == 'both'].append(enr[enr.label == 'bg']).head(MAX_SHAPEMERS)
 enr = enr[['kmer', 'label']].rename(index=str, columns={'label':'enrichment'})
 print(enr)
 
-promiscuous_file = '%s/highly_promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
+#promiscuous_file = '%s/highly_promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
 promis = pd.read_csv(promiscuous_file, dtype={'en_th':object})
 promis = promis[(promis['shape'] == shape_type) & (promis['en_th'] == threshold)]
 promis['promiscuity'] = 'high'
