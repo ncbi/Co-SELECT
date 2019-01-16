@@ -3,10 +3,12 @@ from PyPDF2 import PdfFileMerger
 
 shapes = ['MGW']
 discrete_levels_type = ['publish']
-en_thresholds = ['1.20']
+en_thresholds = ['1.20', '1.10']
 
 
 task_infos = []
+
+tfs = tfs[tfs['tf'].isin(['PITX3', 'GBX2'])]
 
 for i, row in tfs.iterrows():
   tf = row['tf']
@@ -62,7 +64,7 @@ def task_compute_seqlogo_pwms():
                 ensure_dir(output_file)
                 yield {
                   'name'      : output_file,
-                  'actions'   : ["seqlogo_scripts/get_seqlogo_pwm.py %s %s %s %s %d %s %s %s %s %s %s" % (task.tf, task.primer, task.family, motif, cycle, orig_data_dir, top_data_dir, top_results_dir, enrich_file, promiscuous_file, output_file)],
+                  'actions'   : ["seqlogo_scripts/get_seqlogo_pwm.py %s %s %s %s %d %s %s %s %s %s %s %s" % (task.tf, task.primer, task.family, motif, cycle, en_th, orig_data_dir, top_data_dir, top_results_dir, enrich_file, promiscuous_file, output_file)],
                   'file_dep'  : input_files,
                   'targets'   : [output_file],
                   'clean'     : True,
@@ -82,7 +84,7 @@ def task_compute_seqlogo_pwms():
                   ensure_dir(output_file)
                   yield {
                     'name'      : output_file,
-                    'actions'   : ["seqlogo_scripts/get_seqlogo_pwm.py %s %s %s %s %d %s %s %s %s %s %s" % (task.tf, task.primer, task.family, motif, 0, orig_data_dir, top_data_dir, top_results_dir, enrich_file, promiscuous_file, output_file)],
+                    'actions'   : ["seqlogo_scripts/get_seqlogo_pwm.py %s %s %s %s %d %s %s %s %s %s %s %s" % (task.tf, task.primer, task.family, motif, 0, en_th, orig_data_dir, top_data_dir, top_results_dir, enrich_file, promiscuous_file, output_file)],
                     'file_dep'  : input_files,
                     'targets'   : [output_file],
                     'clean'     : True,
@@ -152,7 +154,7 @@ def task_combine_seqlogos():
               outdir = '/'.join([top_seqlogo_dir, levels_type, en_th, task.family, task.tf, task.primer])
               infile = "%s/%s" % (outdir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'csv']))
               infiles.append("%s/%s" % (outdir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'pdf'])))
-          outfile = '%s/fig_seqlogo_enriched_shapemers_%s_%s.pdf' % (top_results_dir, levels_type, fg_type)
+          outfile = '%s/fig_seqlogo_enriched_shapemers_%s_%s_th%s.pdf' % (top_results_dir, levels_type, fg_type, en_th)
           yield {
             'name'      : outfile,
             'actions'   : [(merge_pdfs, [infiles, outfile])],
@@ -163,51 +165,51 @@ def task_combine_seqlogos():
 
 
 
-def task_combine_promiscuous_seqlogo_pwms():
-  """ Get summary information for enrichment """
-  for en_th in en_thresholds:
-    for lflank, rflank in flank_configs:
-      for shape_type in shapes:
-        for levels_type in discrete_levels_type:
-          df = pd.DataFrame()
-          for task in task_infos:
-            for motif, dist in izip(task.motifs, task.distances):
-              indir = '/'.join([top_seqlogo_dir, levels_type, en_th, task.family, task.tf, task.primer])
-              infile = "%s/%s" % (indir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'csv']))
-              df = df.append(pd.DataFrame({'infile': [infile], 'tf':[task.tf], 'family':[task.family], 'primer':[task.primer], 'motif':[motif]}), ignore_index=True)
-          print(df)
-          outfile = "%s/%s" % (top_seqlogo_dir, '.'.join(['seqlogo', shape_type, "allcycles", str(lflank), str(rflank), 'csv']))
-          yield {
-            'name'      : outfile,
-            'actions'   : [(combine_csvs, [df, outfile])],
-            'file_dep'  : df['infile'].tolist(),
-            'targets'   : [outfile],
-            'clean'     : True,
-          }
-
-
-def task_plot_promiscuous_seqlogo():
-  """ Get summary information for enrichment """
-  for en_th in en_thresholds:
-    for lflank, rflank in flank_configs:
-      for shape_type in shapes:
-        for levels_type in discrete_levels_type:
-          infile = "%s/%s" % (top_seqlogo_dir, '.'.join(['seqlogo', shape_type, "allcycles", str(lflank), str(rflank), 'csv']))
-          pdflist = '%s/seqlogo_list_promiscuous_shapemers_%s_%s.csv' % (top_results_dir, levels_type, fg_type)
-          yield {
-            'name'      : pdflist,
-            'actions'   : ["seqlogo_scripts/plot_seqlogo_promiscuous.R -i %s -o %s" % (infile, pdflist)],
-            'file_dep'  : [infile],
-            'targets'   : [pdflist],
-            'clean'     : True,
-          }
-          outfile = '%s/fig_seqlogo_promiscuous_shapemers_%s_%s.pdf' % (top_results_dir, levels_type, fg_type)
-          yield {
-            'name'      : outfile,
-            'actions'   : [(merge_pdfs_from_list, [pdflist, outfile])],
-            'file_dep'  : [pdflist],
-            'targets'   : [outfile],
-            'clean'     : True,
-          }
+#def task_combine_promiscuous_seqlogo_pwms():
+#  """ Get summary information for enrichment """
+#  for en_th in en_thresholds:
+#    for lflank, rflank in flank_configs:
+#      for shape_type in shapes:
+#        for levels_type in discrete_levels_type:
+#          df = pd.DataFrame()
+#          for task in task_infos:
+#            for motif, dist in izip(task.motifs, task.distances):
+#              indir = '/'.join([top_seqlogo_dir, levels_type, en_th, task.family, task.tf, task.primer])
+#              infile = "%s/%s" % (indir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'csv']))
+#              df = df.append(pd.DataFrame({'infile': [infile], 'tf':[task.tf], 'family':[task.family], 'primer':[task.primer], 'motif':[motif]}), ignore_index=True)
+#          print(df)
+#          outfile = "%s/%s" % (top_seqlogo_dir, '.'.join(['seqlogo', shape_type, "allcycles", str(lflank), str(rflank), 'csv']))
+#          yield {
+#            'name'      : outfile,
+#            'actions'   : [(combine_csvs, [df, outfile])],
+#            'file_dep'  : df['infile'].tolist(),
+#            'targets'   : [outfile],
+#            'clean'     : True,
+#          }
+#
+#
+#def task_plot_promiscuous_seqlogo():
+#  """ Get summary information for enrichment """
+#  for en_th in en_thresholds:
+#    for lflank, rflank in flank_configs:
+#      for shape_type in shapes:
+#        for levels_type in discrete_levels_type:
+#          infile = "%s/%s" % (top_seqlogo_dir, '.'.join(['seqlogo', shape_type, "allcycles", str(lflank), str(rflank), 'csv']))
+#          pdflist = '%s/seqlogo_list_promiscuous_shapemers_%s_%s.csv' % (top_results_dir, levels_type, fg_type)
+#          yield {
+#            'name'      : pdflist,
+#            'actions'   : ["seqlogo_scripts/plot_seqlogo_promiscuous.R -i %s -o %s" % (infile, pdflist)],
+#            'file_dep'  : [infile],
+#            'targets'   : [pdflist],
+#            'clean'     : True,
+#          }
+#          outfile = '%s/fig_seqlogo_promiscuous_shapemers_%s_%s.pdf' % (top_results_dir, levels_type, fg_type)
+#          yield {
+#            'name'      : outfile,
+#            'actions'   : [(merge_pdfs_from_list, [pdflist, outfile])],
+#            'file_dep'  : [pdflist],
+#            'targets'   : [outfile],
+#            'clean'     : True,
+#          }
 
 

@@ -41,6 +41,7 @@ parser.add_argument("primer",   help = "barcode")
 parser.add_argument("family",   help = "tf family")
 parser.add_argument("motif",    help = "motif used by Co-SELECT")
 parser.add_argument("cycle",    type = int, help = "SELEX round")
+parser.add_argument("threshold",  help = "enrichment threshold")
 parser.add_argument("orig_dir", help = "top directory for original sequence files")
 parser.add_argument("data_dir", help = "top directory for derived files")
 parser.add_argument("res_dir",  help = "top results directory")
@@ -54,6 +55,7 @@ primer = opt.primer
 family = opt.family
 motif = opt.motif
 cycle = opt.cycle
+threshold = opt.threshold
 orig_data_dir = opt.orig_dir
 top_data_dir = opt.data_dir
 top_results_dir = opt.res_dir
@@ -108,6 +110,7 @@ print(enr)
 #promiscuous_file = '%s/highly_promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
 promis = pd.read_csv(promiscuous_file, dtype={'en_th':object})
 promis = promis[(promis['shape'] == shape_type) & (promis['en_th'] == threshold)]
+print(promis)
 promis['promiscuity'] = 'high'
 promis = promis[['kmer', 'promiscuity']]
 print(promis)
@@ -148,11 +151,11 @@ def check_update_pwm_bg(shp, seq, cnt):
 def check_update_pwm_fg(shp, seq, cnt):
   rev_seq = rev_comp(seq)
   rev_shp = shp[::-1]
-  for s,p in [(seq, shp), (rev_seq, rev_shp)]:
-    #print s, p
-    if p in shapemers:
-      #print 'adding', s, p
-      add_pwm(pwms.loc[p, 'fg']['mat'], s, cnt)
+  if shp in shapemers:
+    add_pwm(pwms.loc[shp, 'fg']['mat'], seq, cnt)
+  elif rev_shp in shapemers:
+    add_pwm(pwms.loc[rev_shp, 'fg']['mat'], rev_seq, cnt)
+
 
 #def print_bg_window(seq, shape, kmers, s, e, count, pwm, candidates):
 #  wl = max(0, s-2)

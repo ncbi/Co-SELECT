@@ -9,6 +9,7 @@ tf_run_coselect_file      = './tf_run_coselect.csv'
 orig_data_dir             = '../data'
 seqmer_data_dir           = '../seqmerdata'
 download_dir              = '../downloads'
+top_shape_dist_dir        = '../shapedists'
 
 contexts                  = ['fg', 'bg']
 fg_types                  = ['d0', 'd1all', 'd1enriched']

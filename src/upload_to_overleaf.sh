@@ -34,8 +34,6 @@ declare -a cycle3_files=(
 "detailed_results_cycle3_d0.xlsx"
 "enriched_shapemers_other1_cycle3_d0.xlsx"
 "enriched_shapemers_publish_cycle3_d0.xlsx"
-"fig_seqlogo_promiscuous_shapemers_publish_d0.pdf"
-"fig_seqlogo_enriched_shapemers_publish_d0.pdf"
 )
 
 
@@ -53,6 +51,8 @@ declare -a cycle4_files=(
 "detailed_results_cycle4_d0.xlsx"
 "enriched_shapemers_other1_cycle4_d0.xlsx"
 "enriched_shapemers_publish_cycle4_d0.xlsx"
+"fig_seqlogo_promiscuous_shapemers_publish_d0.pdf"
+"fig_seqlogo_enriched_shapemers_publish_d0.pdf"
 )
 
 cd $dest
