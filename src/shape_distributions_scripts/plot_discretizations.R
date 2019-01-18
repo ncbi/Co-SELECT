@@ -38,14 +38,13 @@ for (shape in shapes) {
 print(gaussians)
 print(functions)
 
-dis <- read.csv('shape_levels.csv', stringsAsFactors=FALSE)
+dis <- read.csv('shape_levels.csv')
 dis <- dis[dis$levels_type == 'publish', c('shape', 'levels')]
 dis = merge(dis, limits)
 dis$levels = paste(dis$min, dis$levels, dis$max, sep='|')
 print(dis)
 
 getCutoffLabelPos <- function(x) {
-  print(x)
   x = unlist(strsplit(x, '[|]'))
   vals = as.numeric(x[c(T,F)])
   labs = x[c(F,T)]
@@ -58,8 +57,9 @@ dis <- dis %>%
     group_by(shape) %>%
     do(getCutoffLabelPos(.$levels))
 
+# now dis is nested, cannot be unnested because the
+# numbers of cutoffs and labels are different
 print(dis)
-
 
 
 applyFunc <- function(f, x) {
@@ -68,6 +68,8 @@ applyFunc <- function(f, x) {
   })
 }
 
+# unnest cutoffs from dis and also compute the y values
+# of the original density plot at the cutoff levels 
 cutoffs = dis %>%
     select(shape, cutoff) %>%
     unnest() %>%
@@ -77,8 +79,7 @@ cutoffs = dis %>%
     inner_join(functions, by='shape') %>%
     mutate(yend = applyFunc(f, data)) %>%
     select(-f) %>%
-    unnest() %>%
-    mutate(plot = 'B')
+    unnest()
 
 print(cutoffs)
 
@@ -87,28 +88,32 @@ labels <- dis %>%
     select(shape, label, pos) %>%
     unnest() %>%
     mutate(plot = 'B')
+
 print(labels)
 
-print('computing vlines')
-
-print(gaussians)
-
-
-deleteKnown <- function(x) {
+setCutoffSource <- function(x) {
   lapply(x, function(x) {
     for (i in 1:nrow(x)) {
       for (j in 1:nrow(x)) {
         if ((x$plot[i] == 'B') && (x$plot[j] == 'A')) {
           if (abs(x$cutoff[i] - x$cutoff[j]) < 0.1) {
-            x$comp[i] = 'CX'
-            x$selected[j] = x$selected[i]
+            x$comp[i] = x$comp[j]
+            x$plot[i] = 'AB'
           }
         }
       }
     }
-    x = x[x$comp != 'CX',]
+    x
   })
 }
+
+# For a vertical line, it could be either a standard deviate of
+# a component or it is an adhoc cutoff based on intersection / local minima
+# In the first case it has comp = C1, C2 etc and in the second case 
+# it has comp = CX
+
+# Initially we start with all cutoffs but later eliminate those which 
+# have a counterpart in the standard deviates
 
 vlines = gaussians %>%
     group_by(shape, comp) %>%
@@ -117,24 +122,27 @@ vlines = gaussians %>%
     unnest(cutoff, yend) %>%
     select(shape, comp, plot, cutoff, yend) %>%
     mutate(selected = 'no') %>%
-    bind_rows(cutoffs %>% mutate(comp='C0')) %>%
+    bind_rows(cutoffs %>% mutate(comp='CX', plot='B')) %>%
     group_by(shape) %>%
     nest() %>%
-    mutate(data = deleteKnown(data)) %>%
-    unnest() %>%
-    mutate(plot = 'A')
+    mutate(data = setCutoffSource(data)) %>%
+    unnest()
 
+vlines_A = vlines %>% filter(plot != 'AB') %>% mutate(plot = 'A')
+vlines_B = vlines %>% filter(plot != 'A') %>% mutate(plot = 'B')
 
 df = ddply(df, .(shape), mutate, relden = den/max(den, na.rm=T))
 
 
-pdf("Rplots.pdf", width=12, height=4)
+pdf("fig_discretization.pdf", width=12, height=4)
 
 df$shape = factor(df$shape, levels=shapes)
 top$shape = factor(top$shape, levels=shapes)
 labels$shape = factor(labels$shape, levels=shapes)
 cutoffs$shape = factor(cutoffs$shape, levels=shapes)
-vlines$shape = factor(vlines$shape, levels=shapes)
+vlines_A$shape = factor(vlines_A$shape, levels=shapes)
+vlines_B$shape = factor(vlines_B$shape, levels=shapes)
+gaussians$shape = factor(gaussians$shape, levels=shapes)
 
 normaldens <- ddply(gaussians, c("shape", "plot", "comp"), function(df) {
   shape = unique(df$shape)
@@ -148,37 +156,29 @@ normaldens <- ddply(gaussians, c("shape", "plot", "comp"), function(df) {
   )
 })
 
-colors = c(
-'C0' = '#1b9e77',
-'C1' = '#d95f02',
-'C2' = '#7570b3',
-'C3' = '#e7298a'
-)
 
 p <- ggplot(top, aes(x)) +
        geom_histogram(aes(y = ..density..), color= 'grey', alpha = 0.4, linetype='solid', size = 0.25, fill=NA) +                        
        geom_line(data = normaldens, aes(y = density, color= comp), size=0.5, alpha = 0.9) +
-       geom_segment(data = vlines, aes(x = cutoff, y=0, xend = cutoff, yend=yend, color=comp, linetype=selected), size = 0.5, alpha = 0.9) +
+       geom_segment(data = vlines_A, aes(x = cutoff, y=0, xend = cutoff, yend=yend, color=comp, linetype=selected), size = 0.5, alpha = 0.9) +
        geom_line(data = df %>% mutate(plot='A'), aes(y = den, color = 'C0'), size = 0.7, alpha = 0.9) +  
-       #geom_line(aes(y = ..density..), color = 'black', size = 0.5, alpha = 0.9, linetype = 'dotted', stat = 'density') +  
        geom_raster(data = df, aes(y = y, fill = relden)) +
-       geom_vline(data = cutoffs, aes(xintercept = cutoff), alpha = 0.9) +
-       geom_text(data = cutoffs, aes(x = cutoff, label = cutoff), y=-Inf, vjust = +1.5, family='serif', size=3, color='grey30') +
+       geom_segment(data = vlines_B, aes(x = cutoff, y = -Inf, xend = cutoff, yend = +Inf, color = comp), alpha = 0.9) +
+       geom_text(data = vlines_B, aes(x = cutoff, label = cutoff), y=-Inf, vjust = +1.5, family='serif', size=3, color='grey30') +
        geom_text(data = labels, aes(x = pos, label = label), y=0.025) +
        facet_grid(plot~shape, scale = "free", space='free_y') +
        scale_x_continuous(sec.axis = dup_axis(name=NULL, labels=NULL)) +
-       scale_linetype_manual(values = c('yes'='solid', 'no'='dashed'),
-                             labels = c('yes'='SD and/or chosen as a cutoff', 'no' = 'Standard deviation (SD)')) +
+       scale_linetype_manual(values = c('yes'='solid', 'no'='31'),
+                             labels = c('yes'='Cutoff', 'no' = 'Standard deviation (SD)')) +
        scale_fill_gradient(low = 'gray', high = 'red') +
-       scale_color_manual(values = c('C0' = 'red', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
-                          labels = c('C0' = 'Original',
+       scale_color_manual(values = c('C0' = 'red', 'CX' = 'cyan', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
+                          labels = c('C0' = 'Original density', 'CX' = 'Intersection / local minima as cutoff',
                                      'C1' = 'One Gaussian component', 
                                      'C2' = 'Other Gaussian component')) +
        labs(x = "Value of a shape feature", y='Density') +
-       #scale_color_manual(values = colors) +
        theme_tufte() + guides(fill = FALSE, 
-                              linetype = guide_legend(title='Vertical line:', label.hjust=1, order=2),
-                              color=guide_legend(title='Density curve:', label.hjust=1, order = 1)) +
+                              linetype = guide_legend(title='', label.hjust=1, order=2),
+                              color=guide_legend(title='', label.hjust=1, order = 1)) +
        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
        theme(strip.text.y = element_blank()) +
        theme(panel.spacing.y = unit(-0.05, "lines")) +
