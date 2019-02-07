@@ -33,7 +33,12 @@ getLogoPlot <- function(pwms) {
             nest()
   
   pwms$data <- lapply(pwms$data, getPwm)
+  pwms$nseq <- lapply(pwms$data, function(x) max(colSums(x[, 1:seq_length])))
+  pwms <- pwms %>% unnest(nseq)
+
   pwms$context <- ifelse(pwms$context == 'fg', 'motif-containing', 'motif-free')
+
+  print(pwms)
   
   p <- ggplot() + 
          geom_logo(data = pwms, col_scheme = cs) +
@@ -45,6 +50,7 @@ getLogoPlot <- function(pwms) {
          guides(fill=guide_legend(nrow=1,byrow=TRUE)) +
          geom_rect(data = pwms, aes(fill = context), xmin = -Inf,xmax = Inf, ymin = -Inf,ymax = Inf,alpha = 0.1) +
          scale_x_continuous(breaks=1:seq_length, lim=c(0.5, seq_length + 0.5)) +
+         geom_label(data = pwms, aes(label = nseq), x=-Inf, y=Inf, hjust = -0.1, vjust = +1.25) +
          ylim(0,2)
 }
 

@@ -17,8 +17,10 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 print(opt$in_file)
+print(opt$out_file)
 
 pwms = read.csv(opt$in_file, stringsAsFactors=F)
+print(pwms)
 pwms = pwms[pwms$enrichment != "", ]
 pwms$promiscuity <- NULL
 if (all(is.na(pwms))) {
@@ -39,6 +41,8 @@ shapemers <- unique(pwms$shapemer)
 cycles <- unique(pwms$cycle)
 contexts <- unique(pwms$context)
 
+print(pwms)
+
 p <- getLogoPlot(pwms)
 p <- p + facet_grid(shapemer + enrichment ~ context + cycle,
                     labeller = labeller(enrichment = label_both, cycle = label_both))
@@ -46,6 +50,8 @@ p <- p + ggtitle(opt$title)
 
 height = 1 + 2.5*length(shapemers)
 width = 1 + 3*length(contexts)*length(cycles)
+
+print(opt$out_file)
 
 pdf(opt$out_file, height=height, width=width)
 

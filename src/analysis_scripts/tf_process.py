@@ -239,3 +239,22 @@ class TFInfo:
             print >>g, rep, sid1
             print >>g, rev, sid1
 
+ 
+  def gen_bg_shapemers_with_seqmers(self, shape_info, shape_length, seq_file, shape_file, count_file, sid_file, shapemer_file):
+    seq_length = shape_length + 4
+    with open(shapemer_file, 'w') as g:
+      print >>g, "{},{},{}".format('shapemer','seqmer','count')
+      for (sid0, seq), (sid1, shape), (sid2, cnt) in izip(filterSeq(seq_file, sid_file), filterSeq(shape_file, sid_file), filterSeq(count_file, sid_file)):
+        assert(sid1 == sid0)
+        assert(sid1 == sid2)
+        count = int(cnt)
+        seq = seq[self.lbc_len : -self.rbc_len]
+        shape = shape[self.lbc_len : -self.rbc_len]
+        for k in range(len(shape)-shape_length+1):    # TODO: we need rep of either strand
+          shapemer = shape[k:k+shape_length]
+          seqmer = seq[k:k+seq_length]
+          rev_shapemer = shapemer[::-1]
+          if shapemer > rev_shapemer:
+            shapemer = rev_shapemer
+            seqmer = rev_comp(seqmer)
+          print >>g, "{},{},{}".format(shapemer,seqmer,count)

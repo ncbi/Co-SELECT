@@ -46,6 +46,7 @@ shapes = ['MGW', 'HelT', 'ProT', 'Roll']
 
 df['Family'] = pd.Categorical(df['Family'], categories=['bHLH', 'ETS', 'homeodomain'], ordered=True)
 df['Shape'] = pd.Categorical(df['Shape'], categories=shapes, ordered=True)
+df['Threshold'] = pd.Categorical(df['Threshold'], categories=['1.20', '1.10'], ordered=True)
 
 df = df.set_index(['Family', 'Threshold', 'FDR', 'Shape'])
 

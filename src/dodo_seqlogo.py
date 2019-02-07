@@ -8,8 +8,6 @@ en_thresholds = ['1.20', '1.10']
 
 task_infos = []
 
-tfs = tfs[tfs['tf'].isin(['PITX3', 'GBX2'])]
-
 for i, row in tfs.iterrows():
   tf = row['tf']
   bc = row['primer']
@@ -48,8 +46,8 @@ def task_compute_seqlogo_pwms():
             for i, cycle in enumerate(task.cycles):
               for motif, dist in izip(task.motifs, task.distances):
                 enrich_file = '/'.join([top_results_dir, levels_type, en_th, task.family, task.tf, task.primer, 
-                                        '.'.join(['enriched', task.tf_info.tf, task.tf_info.primer, shape_type, str(cycle), motif, str(lflank), str(rflank), 'csv'])])
-                promiscuous_file = '%s/highly_promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
+                                        '.'.join(['enriched', task.tf_info.tf, task.tf_info.primer, shape_type, str(4), motif, str(lflank), str(rflank), 'csv'])])
+                promiscuous_file = '%s/highly_promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, 4, lflank, rflank)
                 input_files = [  "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle)),
                                  "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str)),
                                  "%s/%s.cnt" % (orig_data_dir, task.tf_info.getSequenceFile(cycle)),

@@ -52,7 +52,8 @@ declare -a cycle4_files=(
 "enriched_shapemers_other1_cycle4_d0.xlsx"
 "enriched_shapemers_publish_cycle4_d0.xlsx"
 "fig_seqlogo_promiscuous_shapemers_publish_d0.pdf"
-"fig_seqlogo_enriched_shapemers_publish_d0.pdf"
+"fig_seqlogo_enriched_shapemers_publish_d0_th1.20.pdf"
+#"fig_seqlogo_enriched_shapemers_publish_d0_th1.10.pdf"
 )
 
 cd $dest
