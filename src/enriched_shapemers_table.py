@@ -130,4 +130,4 @@ doc.packages.append(Package('multirow'))
 doc.packages.append(Package('pifont'))
 doc.append(NoEscape('\n'.join(lines)))
 
-doc.generate_pdf(os.path.splitext('hehehehehehehe.pdf')[0], clean_tex=True)
+doc.generate_pdf(os.path.splitext('table_enriched_shapemers.pdf')[0], clean_tex=True)
