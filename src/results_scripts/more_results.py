@@ -8,16 +8,19 @@ def get_col_widths(dataframe):
                         [len(str(x)) for x in col] if dataframe.columns.nlevels > 1 else [len(str(col))]) for col in dataframe.columns]
 
 def save_dataframe(writer, sheet, df):
+  df.dropna(axis='index', how='all', inplace=True)
+  df.dropna(axis='columns', how='all', inplace=True)
   df.to_excel(writer, sheet_name = sheet)
   for j, width in enumerate(get_col_widths(df)):
     writer.sheets[sheet].set_column(j, j, width)
   writer.sheets[sheet].freeze_panes(df.columns.nlevels+1, df.index.nlevels)
 
 
-def get_enriched_shapemers_in_excel(infile, motif_file, xlsfile, csvfile):
+#def get_enriched_shapemers_in_excel(infile, motif_file, xlsfile, csvfile):
+def get_enriched_shapemers_in_excel(combined, motif_file, xlsfile, csvfile):
   writer = pd.ExcelWriter(xlsfile, engine='xlsxwriter')
   tf_motif = pd.read_csv(motif_file)
-  combined = pd.read_csv(infile)
+  #combined = pd.read_csv(infile)
   shapes = combined['shape'].drop_duplicates()
   combined = combined[['family.x', 'tf.x', 'primer.x', 'kmer', 'label', 'en_th', 'shape']]
   combined = combined[combined['label'].isin(['both','bg'])]

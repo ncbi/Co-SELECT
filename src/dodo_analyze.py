@@ -2,7 +2,9 @@ from dodo_common import *
 
 task_infos = []
 
-#tfs = tfs[tfs['tf'] == 'MAX']
+#tfs = tfs[(tfs['tf'] == 'PITX3') | (tfs['tf'] == 'PHOX2B')]
+
+#tfs = tfs.drop_duplicates('primer')
 
 for i, row in tfs.iterrows():
   tf = row['tf']
@@ -14,6 +16,21 @@ for i, row in tfs.iterrows():
   dist = row['distance']
   accessions = row['accessions']
   task_infos.append(TaskInfo(tf, bc, family, accessions, [motif], cycles, [dist]))
+
+
+tfs = tfs.drop_duplicates(['primer','motif'])
+zero_task_infos = []
+
+for i, row in tfs.iterrows():
+  tf = 'ZeroCycle'
+  bc = row['primer']
+  #cycles = [row['final']] #[4] #[int(x) for x in row['cycles'].split(';')]
+  #cycles = [1,2,3,4]
+  motif = row['motif']
+  family = 'NoFamily'
+  dist = row['distance']
+  accessions = row['accessions']
+  zero_task_infos.append(TaskInfo(tf, bc, family, accessions, [motif], [0], [dist]))
 
 
 def task_preprocess():
@@ -131,6 +148,96 @@ def task_get_fg_shapemers():
                 }
 
 
+def task_get_fg_shapemers_seqmers():
+  """ Generate shape mers """
+  for task in task_infos:
+    for lflank, rflank in flank_configs:
+      for shape_type in shapes:
+        for levels_type in ['publish']: #discrete_levels_type:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for cycle in [4]: #task.cycles:
+            seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
+            shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
+            count_file = "%s.cnt" % (seq_file)
+            for motif, dist in izip(task.motifs, task.distances):
+              context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
+              parts_file = "%s/%s" % (top_data_dir, task.tf_info.getFgPartsFile(cycle, motif, dist, lflank, rflank))
+              shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              yield {
+                'name'      : shapemer_file,
+                'actions'   : [(task.tf_info.gen_fg_shapemers_seqmers, [shinfo, task.shape_length, seq_file, shape_file, count_file, context_file, motif, lflank, rflank, parts_file, shapemer_file])],
+                'file_dep'  : [shape_file, count_file, context_file],
+                'targets'   : [shapemer_file],
+                'clean'     : True,
+              }
+
+
+def task_get_fg_shapemers_seqmers_cycle_zero():
+  """ Generate shape mers """
+  for task in zero_task_infos:
+    for lflank, rflank in flank_configs:
+      for shape_type in ['MGW']: #shapes:
+        for levels_type in ['publish']: #discrete_levels_type:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for cycle in [0]: #task.cycles:
+            seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
+            shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
+            count_file = "%s.cnt" % (seq_file)
+            for motif, dist in izip(task.motifs, task.distances):
+              context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'fg'))
+              parts_file = "%s/%s" % (top_data_dir, task.tf_info.getFgPartsFile(cycle, motif, dist, lflank, rflank))
+              shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              yield {
+                'name'      : shapemer_file,
+                'actions'   : [(task.tf_info.gen_fg_shapemers_seqmers, [shinfo, task.shape_length, seq_file, shape_file, count_file, context_file, motif, lflank, rflank, parts_file, shapemer_file])],
+                'file_dep'  : [shape_file, count_file, context_file],
+                'targets'   : [shapemer_file],
+                'clean'     : True,
+              }
+
+
+def task_get_fg_shapemers_logo():
+  """ Generate shape mers """
+  for task in task_infos:
+    for lflank, rflank in flank_configs:
+      for shape_type in ['MGW']: #shapes:
+        for levels_type in ['publish']: #discrete_levels_type:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for cycle in [ 4]: #task.cycles:
+            for motif, dist in izip(task.motifs, task.distances):
+              shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              yield {
+                'name'      : seqlogo_file,
+                'actions'   : ["analysis_scripts/get_logo_pwms.py %s %s" %(shapemer_file, seqlogo_file)],
+                'file_dep'  : [shapemer_file],
+                'targets'   : [seqlogo_file],
+                'clean'     : True,
+              }
+
+def task_get_fg_shapemers_logo_zero():
+  """ Generate shape mers """
+  for task in zero_task_infos:
+    for lflank, rflank in flank_configs:
+      for shape_type in ['MGW']: #shapes:
+        for levels_type in ['publish']: #discrete_levels_type:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for cycle in [0]: #task.cycles:
+            for motif, dist in izip(task.motifs, task.distances):
+              shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              yield {
+                'name'      : seqlogo_file,
+                'actions'   : ["analysis_scripts/get_logo_pwms.py %s %s" %(shapemer_file, seqlogo_file)],
+                'file_dep'  : [shapemer_file],
+                'targets'   : [seqlogo_file],
+                'clean'     : True,
+              }
+
 def task_get_bg_shapemers():
   """ Generate shape mers """
   for task in task_infos:
@@ -158,11 +265,11 @@ def task_get_bg_shapemers():
 def task_get_bg_shapemers_seqmers():
   """ Generate shape mers """
   for task in task_infos:
-    for shape_type in shapes:
+    for shape_type in ['MGW']: #shapes:
       for levels_type in ['publish']: #discrete_levels_type:
         shinfo = shape_info[levels_type][shape_type]
         shape_levels_str = shinfo.getLevelsStr()
-        for cycle in [4]: #task.cycles:
+        for cycle in [1,2,3,4]: #task.cycles:
           seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
           shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
           count_file = "%s.cnt" % (seq_file)
@@ -178,14 +285,49 @@ def task_get_bg_shapemers_seqmers():
               }
 
 
-def task_get_bg_shapemers_logo():
+def task_get_bg_shapemers_seqmers_zero():
   """ Generate shape mers """
-  for task in task_infos:
-    for shape_type in shapes:
+  for task in zero_task_infos:
+    for shape_type in ['MGW']: #shapes:
       for levels_type in ['publish']: #discrete_levels_type:
         shinfo = shape_info[levels_type][shape_type]
         shape_levels_str = shinfo.getLevelsStr()
-        for cycle in [4]: #task.cycles:
+        for cycle in [0]: #task.cycles:
+          seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
+          shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
+          count_file = "%s.cnt" % (seq_file)
+          for motif, dist in izip(task.motifs, task.distances):
+              context_file = "%s/%s" % (top_data_dir, task.tf_info.getContextFile(cycle, motif, dist, 'bg'))
+              shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
+              yield {
+                'name'      : shapemer_file,
+                'actions'   : [(task.tf_info.gen_bg_shapemers_with_seqmers, [shinfo, task.shape_length, seq_file, shape_file, count_file, context_file, shapemer_file])],
+                'file_dep'  : [shape_file, count_file, context_file],
+                'targets'   : [shapemer_file],
+                'clean'     : True,
+              }
+
+def combine_csvs(configs, outfile):
+  #print(outfile)
+  #print(configs)
+  index_cols = list(set(configs.columns) - set(['infile']))
+  df = pd.DataFrame()
+  for indx, r in configs.iterrows():
+    tmp = pd.read_csv(r['infile'])
+    for col in index_cols:
+      tmp[col] = r[col]
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def task_get_bg_shapemers_logo():
+  """ Generate shape mers """
+  for task in task_infos:
+    for shape_type in ['MGW']: #shapes:
+      for levels_type in ['publish']: #discrete_levels_type:
+        shinfo = shape_info[levels_type][shape_type]
+        shape_levels_str = shinfo.getLevelsStr()
+        for cycle in [1,2,3,4]: #task.cycles:
           for motif, dist in izip(task.motifs, task.distances):
               shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
               seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
@@ -197,6 +339,73 @@ def task_get_bg_shapemers_logo():
                 'clean'     : True,
               }
 
+def task_get_bg_shapemers_logo_zero():
+  """ Generate shape mers """
+  for task in zero_task_infos:
+    for shape_type in ['MGW']: #shapes:
+      for levels_type in ['publish']: #discrete_levels_type:
+        shinfo = shape_info[levels_type][shape_type]
+        shape_levels_str = shinfo.getLevelsStr()
+        for cycle in [0]: #task.cycles:
+          for motif, dist in izip(task.motifs, task.distances):
+              shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
+              seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
+              yield {
+                'name'      : seqlogo_file,
+                'actions'   : ["analysis_scripts/get_logo_pwms.py %s %s" %(shapemer_file, seqlogo_file)],
+                'file_dep'  : [shapemer_file],
+                'targets'   : [seqlogo_file],
+                'clean'     : True,
+              }
+
+
+def task_get_combined_shapemers_logo():
+  """ Generate shape mers """
+  for task in task_infos:
+    for shape_type in ['MGW']: #shapes:
+      for levels_type in ['publish']: #discrete_levels_type:
+        shinfo = shape_info[levels_type][shape_type]
+        shape_levels_str = shinfo.getLevelsStr()
+        df = pd.DataFrame(columns=['cycle', 'motif', 'context', 'infile'])
+        for cycle in [0,1,2,3,4]: #task.cycles:
+          for motif, dist in izip(task.motifs, task.distances):
+              seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
+              df = df.append({'cycle':cycle, 'motif':motif, 'context':'bg', 'infile':seqlogo_file}, ignore_index=True)
+        for lflank, rflank in flank_configs:
+          for cycle in [0, 4]: #task.cycles:
+            for motif, dist in izip(task.motifs, task.distances):
+              seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
+              df = df.append({'cycle':cycle, 'motif':motif, 'context':'fg', 'infile':seqlogo_file}, ignore_index=True)
+        outfile = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(1111, 'all', 0, 0, 0, 'combined',shape_type, shape_levels_str))
+        yield {
+          'name'      : outfile,
+          'actions'   : [(combine_csvs, [df, outfile])],
+          'file_dep'  : df['infile'].tolist(),
+          'targets'   : [outfile],
+          'clean'     : True,
+        }
+
+
+def task_get_combined_shapemers_logo_all():
+  """ Generate shape mers """
+  for lflank, rflank in flank_configs:
+    for shape_type in ['MGW']: #shapes:
+      for levels_type in ['publish']: #discrete_levels_type:
+        shinfo = shape_info[levels_type][shape_type]
+        shape_levels_str = shinfo.getLevelsStr()
+        df = pd.DataFrame(columns=['family', 'tf', 'primer', 'infile'])
+        for task in task_infos:
+          infile = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(1111, 'all', 0, 0, 0, 'combined',shape_type, shape_levels_str))
+          df = df.append({'family':task.family, 'tf':task.tf, 'primer':task.primer, 'infile':infile}, ignore_index=True)
+        print(df)
+        outfile = '../seqlogos/d0/new.seqlogo.%s.allcycles.1.1.csv' % (shape_type)
+        yield {
+          'name'      : outfile,
+          'actions'   : [(combine_csvs, [df, outfile])],
+          'file_dep'  : df['infile'].tolist(),
+          'targets'   : [outfile],
+          'clean'     : True,
+        }
 
 def task_get_bg_shapemers_median_ic():
   """ Generate shape mers """
@@ -217,16 +426,6 @@ def task_get_bg_shapemers_median_ic():
                 'clean'     : True,
               }
 
-
-def combine_csvs(configs, outfile):
-  index_cols = list(set(configs.columns) - set(['infile']))
-  df = pd.DataFrame()
-  for indx, r in configs.iterrows():
-    tmp = pd.read_csv(r['infile'])
-    for col in index_cols:
-      tmp[col] = r[col]
-    df = df.append(tmp, ignore_index=True)
-  df.to_csv(outfile, index=False)
 
 
 

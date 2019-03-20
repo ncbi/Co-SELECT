@@ -197,6 +197,26 @@ class TFInfo:
         print >>f, rep, seq_id
       #print rep, seq_id
 
+  def print_shape_window_seqmers(self, shape, seq_id, pos, motif_length, shape_length, lflank, rflank, skip, count, f, seq):
+    # SEQ START POS = pos - lflank
+    # SHAPE START POS = pos - lflank - 2 irrespective of shape feature
+    # SEQ END POS = pos + rflank + k  where k is motif length
+    # SHAPE END POS = pos + rflank + k - 2      for MGW,ProT and
+    #               = pos + rflank + k - 2 + 1  for Roll, HelT
+    wl = max(0, pos-lflank-2)
+    wr = min(len(shape), pos+motif_length+rflank-skip) 
+    #window = shape[wl:wr]
+    #print window
+    #print "pos", pos
+    #print "wl", wl
+    #print "wr", wr
+    for k in range(wl, wr-shape_length+1):
+      #print window[k:k+shape_length], getRepresent(window[k:k+shape_length])
+      shapemer = shape[k:k+shape_length] #getRepresent(window[k:k+shape_length])
+      seqmer = seq[k:k+shape_length+4]
+      print >>f, "{},{},{}".format(shapemer,seqmer,count)
+      print "{},{},{}".format(shapemer,seqmer,count)
+
  
   def gen_fg_shapemers(self, shape_info, shape_length, seq_file, shape_file, count_file, sid_file, motif, lflank, rflank, parts_file, shapemer_file):
     with open(parts_file) as f, open(shapemer_file, 'w') as g:
@@ -217,7 +237,6 @@ class TFInfo:
           #print '->', pos, seq[pos:pos+len(motif)]
           assert(hamming_single(seq[pos:pos+len(motif)], motif) <= 1)
           self.print_shape_window(shape, seq_id, pos, len(motif), shape_length, lflank, rflank, shape_info.skip, count, g)
-  
         shape = shape[::-1]
         rev = rev_comp(seq)
         for i in range(num_forward, len(positions)):
@@ -225,6 +244,35 @@ class TFInfo:
           #print '<-', pos, rev[pos:pos+len(motif)]
           assert(hamming_single(rev[pos:pos+len(motif)], motif) <= 1)
           self.print_shape_window(shape, seq_id, pos, len(motif), shape_length, lflank, rflank, shape_info.skip, count, g)
+ 
+
+  def gen_fg_shapemers_seqmers(self, shape_info, shape_length, seq_file, shape_file, count_file, sid_file, motif, lflank, rflank, parts_file, shapemer_file):
+    with open(parts_file) as f, open(shapemer_file, 'w') as g:
+      print >>g, "{},{},{}".format('shapemer','seqmer','count')
+      for l, (sid0, seq), (sid1, shape), (sid2, cnt) in izip(f, filterSeq(seq_file, sid_file), filterSeq(shape_file, sid_file), filterSeq(count_file, sid_file)):
+        print seq
+        print "%s%s" % (''.join([' ']*shape_info.skip), shape)
+        words = l.rstrip().split(' ')
+        seq_id = int(words[0])
+        assert(seq_id == sid0)
+        assert(seq_id == sid1)
+        assert(seq_id == sid2)
+        count = int(cnt)
+        num_forward = int(words[1])
+        num_reverse = int(words[2])
+        positions = words[3].split(',')
+        for i in range(num_forward):
+          pos = int(positions[i])
+          #print '->', pos, seq[pos:pos+len(motif)]
+          assert(hamming_single(seq[pos:pos+len(motif)], motif) <= 1)
+          self.print_shape_window_seqmers(shape, seq_id, pos, len(motif), shape_length, lflank, rflank, shape_info.skip, count, g, seq)
+        shape = shape[::-1]
+        rev = rev_comp(seq)
+        for i in range(num_forward, len(positions)):
+          pos = int(positions[i])
+          #print '<-', pos, rev[pos:pos+len(motif)]
+          assert(hamming_single(rev[pos:pos+len(motif)], motif) <= 1)
+          self.print_shape_window_seqmers(shape, seq_id, pos, len(motif), shape_length, lflank, rflank, shape_info.skip, count, g, rev)
  
   def gen_bg_shapemers(self, shape_info, shape_length, shape_file, count_file, sid_file, shapemer_file):
     with open(shapemer_file, 'w') as g:
@@ -253,8 +301,10 @@ class TFInfo:
         for k in range(len(shape)-shape_length+1):    # TODO: we need rep of either strand
           shapemer = shape[k:k+shape_length]
           seqmer = seq[k:k+seq_length]
-          rev_shapemer = shapemer[::-1]
-          if shapemer > rev_shapemer:
-            shapemer = rev_shapemer
-            seqmer = rev_comp(seqmer)
+          print >>g, "{},{},{}".format(shapemer,seqmer,count)
+        shape = shape[::-1]
+        seq = rev_comp(seq)
+        for k in range(len(shape)-shape_length+1):    # TODO: we need rep of either strand
+          shapemer = shape[k:k+shape_length]
+          seqmer = seq[k:k+seq_length]
           print >>g, "{},{},{}".format(shapemer,seqmer,count)

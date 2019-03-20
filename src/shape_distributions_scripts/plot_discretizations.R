@@ -134,7 +134,7 @@ vlines_B = vlines %>% filter(plot != 'A') %>% mutate(plot = 'B')
 df = ddply(df, .(shape), mutate, relden = den/max(den, na.rm=T))
 
 
-pdf("fig_discretization.pdf", width=12, height=4)
+pdf("fig_discretization.pdf", width=10, height=4)
 
 df$shape = factor(df$shape, levels=shapes)
 top$shape = factor(top$shape, levels=shapes)
@@ -156,6 +156,8 @@ normaldens <- ddply(gaussians, c("shape", "plot", "comp"), function(df) {
   )
 })
 
+dots = data.frame(x=c(4.65, 32.04, -9.32, -4.99), y=c(0.22, 0.03, 0.088, 0.058), shape=c('MGW', 'HelT', 'ProT', 'ProT'), plot = 'A')
+
 
 p <- ggplot(top, aes(x)) +
        geom_histogram(aes(y = ..density..), color= 'grey', alpha = 0.4, linetype='solid', size = 0.25, fill=NA) +                        
@@ -166,13 +168,14 @@ p <- ggplot(top, aes(x)) +
        geom_segment(data = vlines_B, aes(x = cutoff, y = -Inf, xend = cutoff, yend = +Inf, color = comp), alpha = 0.9) +
        geom_text(data = vlines_B, aes(x = cutoff, label = cutoff), y=-Inf, vjust = +1.5, family='serif', size=3, color='grey30') +
        geom_text(data = labels, aes(x = pos, label = label), y=0.025) +
+       geom_point(data = dots, aes(x=x, y=y), size=3, color='darkviolet') +
        facet_grid(plot~shape, scale = "free", space='free_y') +
        scale_x_continuous(sec.axis = dup_axis(name=NULL, labels=NULL)) +
        scale_linetype_manual(values = c('yes'='solid', 'no'='31'),
-                             labels = c('yes'='Cutoff', 'no' = 'Standard deviation (SD)')) +
+                             labels = c('yes'='Cutoff', 'no' = 'Standard deviation')) +
        scale_fill_gradient(low = 'gray', high = 'red') +
-       scale_color_manual(values = c('C0' = 'red', 'CX' = 'cyan', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
-                          labels = c('C0' = 'Original density', 'CX' = 'Intersection / local minima as cutoff',
+       scale_color_manual(values = c('C0' = 'red', 'CX' = 'darkviolet', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
+                          labels = c('C0' = 'Original density', 'CX' = 'Intersection / local minima',
                                      'C1' = 'One Gaussian component', 
                                      'C2' = 'Other Gaussian component')) +
        labs(x = "Value of a shape feature", y='Density') +
@@ -186,7 +189,7 @@ p <- ggplot(top, aes(x)) +
        theme(axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
        # Remove only the legend title
        theme(legend.position='bottom') +
-       theme(legend.text = element_text(margin = margin(r = 10, unit = "pt"))) +
+       theme(legend.text = element_text(margin = margin(r = 5, unit = "pt"))) +
        theme(plot.margin = margin(1, 1, 0, 1, "mm")) +
        theme(axis.title.x = element_text(vjust=-4.5)) 
 

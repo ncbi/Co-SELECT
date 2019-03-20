@@ -14,8 +14,8 @@ top_shape_dist_dir        = '../shapedists'
 contexts                  = ['fg', 'bg']
 fg_types                  = ['d0', 'd1all', 'd1enriched']
 fg_type                   = 'd1all'
-fg_type                   = 'd0'
 fg_type                   = 'd1enriched'
+fg_type                   = 'd0'
 
 cycles                    = [1, 2, 3, 4] if fg_type == 'd0' else [4]
 cycles                    = [3, 4] if fg_type == 'd0' else [4]

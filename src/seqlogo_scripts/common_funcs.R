@@ -9,9 +9,9 @@ suppressMessages(require(grid))
 suppressMessages(require(gridExtra))
 
 cs = make_col_scheme(
-       chars = c('A', 'C', 'G', 'T', 'U', 'X', 'B', 'D', 'E'),
-       groups = c('A', 'C', 'G', 'T', 'U', 'full', 'fgfull', 'motif-containing', 'motif-free'),
-       cols = c('#109648', '#255C99', '#F7B32B', '#D62839', '#D62839', 'white', 'green', 'blue', 'red'))
+       chars = c('A', 'C', 'G', 'T', 'U', 'X', 'B', 'D', 'E', 'F', 'H', 'I', 'J'),
+       groups = c('A', 'C', 'G', 'T', 'U', 'full', 'fgfull', 'motif-containing', 'motif-free', 'fg', 'bg', 'motif-containing-total', 'motif-containing-enriched'),
+       cols = c('#109648', '#255C99', '#F7B32B', '#D62839', '#D62839', 'white', 'green', 'blue', 'red', 'blue', 'red', 'blue', 'blue'))
 
 getPwm <- function(df) {
   mat <- as.matrix(df[, !(names(df) %in% c('base'))])
