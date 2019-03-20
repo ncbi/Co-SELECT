@@ -84,6 +84,7 @@ cutoffs = dis %>%
 print(cutoffs)
 
 
+
 labels <- dis %>% 
     select(shape, label, pos) %>%
     unnest() %>%
@@ -134,7 +135,6 @@ vlines_B = vlines %>% filter(plot != 'A') %>% mutate(plot = 'B')
 df = ddply(df, .(shape), mutate, relden = den/max(den, na.rm=T))
 
 
-pdf("fig_discretization.pdf", width=10, height=4)
 
 df$shape = factor(df$shape, levels=shapes)
 top$shape = factor(top$shape, levels=shapes)
@@ -157,6 +157,53 @@ normaldens <- ddply(gaussians, c("shape", "plot", "comp"), function(df) {
 })
 
 dots = data.frame(x=c(4.65, 32.04, -9.32, -4.99), y=c(0.22, 0.03, 0.088, 0.058), shape=c('MGW', 'HelT', 'ProT', 'ProT'), plot = 'A')
+
+
+p <- ggplot(df, aes(x)) +
+       #geom_histogram(aes(y = ..density..), color= 'grey', alpha = 0.4, linetype='solid', size = 0.25, fill=NA) +                        
+       #geom_line(data = normaldens, aes(y = density, color= comp), size=0.5, alpha = 0.9) +
+       #geom_segment(data = vlines_A, aes(x = cutoff, y=0, xend = cutoff, yend=yend, color=comp, linetype=selected), size = 0.5, alpha = 0.9) +
+       #geom_line(data = df %>% mutate(plot='A'), aes(y = den, color = 'C0'), size = 0.7, alpha = 0.9) +  
+       geom_raster(data = df, aes(y = y, fill = relden)) +
+       geom_segment(data = vlines_B, aes(x = cutoff, y = -Inf, xend = cutoff, yend = +Inf), color = 'black', alpha = 0.9) +
+       geom_text(data = vlines_B, aes(x = cutoff, label = cutoff), y=+Inf, vjust = -0.5, family='serif', size=3, color='grey30') +
+       geom_text(data = labels, aes(x = pos, label = label), y=0.025) +
+       #geom_point(data = dots, aes(x=x, y=y), size=3, color='darkviolet') +
+       facet_wrap(~shape, scale = "free", ncol=2) +
+       #scale_x_continuous(sec.axis = dup_axis(name=NULL, labels=NULL)) +
+       #scale_linetype_manual(values = c('yes'='solid', 'no'='31'),
+       #                      labels = c('yes'='Cutoff', 'no' = 'Standard deviation')) +
+       scale_fill_gradient(low = 'gray', high = 'red') +
+       #scale_color_manual(values = c('C0' = 'red', 'CX' = 'darkviolet', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
+       #                   labels = c('C0' = 'Original density', 'CX' = 'Intersection / local minima',
+       #                              'C1' = 'One Gaussian component', 
+       #                              'C2' = 'Other Gaussian component')) +
+       #labs(x = "Value of a shape feature", y='') +
+       labs(x = "", y='') +
+       theme_tufte() + guides(fill = FALSE, 
+                              linetype = guide_legend(title='', label.hjust=1, order=2),
+                              color=guide_legend(title='', label.hjust=1, order = 1)) +
+       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+       theme(strip.text.y = element_blank()) +
+       theme(panel.spacing.y = unit(+1.5, "lines")) +
+       theme(panel.border = element_blank()) +
+       #theme(axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+       theme(axis.line = element_blank()) +
+       # Remove only the legend title
+       theme(legend.position='bottom') +
+       theme(legend.text = element_text(margin = margin(r = 5, unit = "pt"))) +
+       #theme(plot.margin = margin(1, 1, 1, 1, "mm")) +
+       #theme(axis.title.x = element_text(vjust=-4.5))+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+        theme(strip.text.x = element_text(margin = margin(0, 0, 0.75, 0, "cm"), vjust = 0.0, size = 12)) +
+        coord_cartesian(clip = 'off')
+
+
+pdf("fig_discretization.pdf", width=8, height=5)
+print(p)
+
 
 
 p <- ggplot(top, aes(x)) +
@@ -193,6 +240,8 @@ p <- ggplot(top, aes(x)) +
        theme(plot.margin = margin(1, 1, 0, 1, "mm")) +
        theme(axis.title.x = element_text(vjust=-4.5)) 
 
+
+pdf("fig_discretization_detailed.pdf", width=10, height=4)
 
 gt = ggplot_gtable(ggplot_build(p))
 
