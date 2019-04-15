@@ -148,7 +148,7 @@ class TFInfo:
 
  
   def gen_fg_parts(self, fg_type, seq_file, sid_file, nbr_file, motif, parts_file):
-    print fg_type
+    #print fg_type
     if fg_type == 'd1enriched':
       d1_nbrs = pd.read_csv(nbr_file)['seqmer'].tolist()
       d1_nbrs = list(set(d1_nbrs) - set([motif]))
@@ -215,7 +215,7 @@ class TFInfo:
       shapemer = shape[k:k+shape_length] #getRepresent(window[k:k+shape_length])
       seqmer = seq[k:k+shape_length+4]
       print >>f, "{},{},{}".format(shapemer,seqmer,count)
-      print "{},{},{}".format(shapemer,seqmer,count)
+      #print "{},{},{}".format(shapemer,seqmer,count)
 
  
   def gen_fg_shapemers(self, shape_info, shape_length, seq_file, shape_file, count_file, sid_file, motif, lflank, rflank, parts_file, shapemer_file):
@@ -250,8 +250,8 @@ class TFInfo:
     with open(parts_file) as f, open(shapemer_file, 'w') as g:
       print >>g, "{},{},{}".format('shapemer','seqmer','count')
       for l, (sid0, seq), (sid1, shape), (sid2, cnt) in izip(f, filterSeq(seq_file, sid_file), filterSeq(shape_file, sid_file), filterSeq(count_file, sid_file)):
-        print seq
-        print "%s%s" % (''.join([' ']*shape_info.skip), shape)
+        #print seq
+        #print "%s%s" % (''.join([' ']*shape_info.skip), shape)
         words = l.rstrip().split(' ')
         seq_id = int(words[0])
         assert(seq_id == sid0)

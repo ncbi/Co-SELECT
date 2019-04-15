@@ -233,7 +233,7 @@ shape_levels <- read.csv(shape_levels_file, stringsAsFactors=FALSE)
 shape_levels$new_levels_type <- shape_levels$levels_type
 shape_levels$new_levels_type[shape_levels$levels_type == 'other1'] <- 'alternative'
 shape_levels$new_levels_type[shape_levels$levels_type == 'other2'] <- 'alternative2'
-shape_levels$new_levels_type[shape_levels$levels_type == 'publish'] <- 'main-text'
+shape_levels$new_levels_type[shape_levels$levels_type == 'publish'] <- 'main'
 shape_levels$levels <- paste(paste(paste('shape', shape_levels$shape, sep=':'), paste('levels', shape_levels$new_levels_type, sep=':'), sep=', '), shape_levels$levels, sep='\n')
 shape_levels <- shape_levels[, c('shape', 'levels_type', 'levels')]
 shape_levels$shape <- factor(shape_levels$shape, levels=c('MGW', 'HelT', 'ProT', 'Roll'), ordered=TRUE)

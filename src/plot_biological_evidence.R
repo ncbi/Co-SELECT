@@ -243,7 +243,7 @@ getNmrPlot <- function() {
   p <- plot_grid(p2, p1, labels = c("A", "B"), ncol=1)
 }
 
-getPCAplot <- function() {
+getPCAplot <- function(show_labels=TRUE) {
 
 pca_csv = '../results/d0/pca_shapemers_publish.cycle4.l1.r1.csv'
 
@@ -300,7 +300,6 @@ p <- ggplot() +
 ## Add in your real plot goal  
   #geom_bar(data = services, aes(category, fill=subcategory)) +
   geom_point(data = pca, aes(x=pca.one, y=pca.two, color=category), size = 4, alpha = 0.8) +
-  geom_text_repel(data = pca, aes(x=pca.one, y=pca.two, label=label), size = 4, force = 6) +
 ## Remove the Fill legend  
   #scale_fill_hue(guide="none") +
   scale_alpha(guide="none") +
@@ -320,6 +319,9 @@ p <- ggplot() +
 #> Warning: Removed 2 rows containing missing values (geom_point).
 #> Warning: Removed 3 rows containing missing values (geom_point).
 #> geom_path: Each group consist of only one observation. Do you need to adjust the group aesthetic?
+if (show_labels) {
+  p <- p + geom_text_repel(data = pca, aes(x=pca.one, y=pca.two, label=label), size = 4, force = 6) 
+}
   p
 }
 
@@ -340,7 +342,8 @@ pdf('fig_biological_validation.pdf', width=11, height = 6)
 print(p3)
 
 
-pdf('fig_pca.pdf', width=11, height = 5)
-print(p4)
+pdf('fig_pca.pdf', width=8, height = 5)
+p5 <- getPCAplot(FALSE)
+print(p5)
 
 quit()

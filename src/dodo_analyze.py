@@ -1,4 +1,6 @@
 from dodo_common import *
+from PyPDF2 import PdfFileMerger
+import subprocess as sp
 
 task_infos = []
 
@@ -156,7 +158,7 @@ def task_get_fg_shapemers_seqmers():
         for levels_type in ['publish']: #discrete_levels_type:
           shinfo = shape_info[levels_type][shape_type]
           shape_levels_str = shinfo.getLevelsStr()
-          for cycle in [4]: #task.cycles:
+          for cycle in [1,2,3,4]: #task.cycles:
             seq_file = "%s/%s" % (orig_data_dir, task.tf_info.getSequenceFile(cycle))
             shape_file = "%s/%s" % (orig_data_dir, task.tf_info.getDiscreteShapeFile(cycle, shape_type, shape_levels_str))
             count_file = "%s.cnt" % (seq_file)
@@ -206,7 +208,7 @@ def task_get_fg_shapemers_logo():
         for levels_type in ['publish']: #discrete_levels_type:
           shinfo = shape_info[levels_type][shape_type]
           shape_levels_str = shinfo.getLevelsStr()
-          for cycle in [ 4]: #task.cycles:
+          for cycle in [1,2,3, 4]: #task.cycles:
             for motif, dist in izip(task.motifs, task.distances):
               shapemer_file = "%s/%s.new" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
               seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
@@ -372,7 +374,7 @@ def task_get_combined_shapemers_logo():
               seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, 0, 0, 'bg',shape_type, shape_levels_str))
               df = df.append({'cycle':cycle, 'motif':motif, 'context':'bg', 'infile':seqlogo_file}, ignore_index=True)
         for lflank, rflank in flank_configs:
-          for cycle in [0, 4]: #task.cycles:
+          for cycle in [0, 1,2,3,4]: #task.cycles:
             for motif, dist in izip(task.motifs, task.distances):
               seqlogo_file = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(cycle, motif, dist, lflank, rflank, 'fg',shape_type, shape_levels_str))
               df = df.append({'cycle':cycle, 'motif':motif, 'context':'fg', 'infile':seqlogo_file}, ignore_index=True)
@@ -406,6 +408,64 @@ def task_get_combined_shapemers_logo_all():
           'targets'   : [outfile],
           'clean'     : True,
         }
+
+
+
+
+def task_plot_seqlogo_pwms():
+  """ Get summary information for enrichment """
+  for en_th in ['1.20']:
+    for lflank, rflank in flank_configs:
+      for shape_type in ['MGW']:
+        for levels_type in ['publish']:
+          shinfo = shape_info[levels_type][shape_type]
+          shape_levels_str = shinfo.getLevelsStr()
+          for task in task_infos:
+            for motif, dist in izip(task.motifs, task.distances):
+              cycle = 4 # for enrichment
+              outdir = '/'.join([top_seqlogo_dir, levels_type, en_th, task.family, task.tf, task.primer])
+              infile = "%s/%s.pwm" % (top_data_dir, task.tf_info.getContextedShapemerFile(1111, 'all', 0, 0, 0, 'combined',shape_type, shape_levels_str))
+              enrich = '%s/%s/%s/%s/%s/%s/enriched.%s.%s.%s.%d.%s.%d.%d.csv' % (top_results_dir, levels_type, en_th, task.family, task.tf, task.primer, task.tf, task.primer, shape_type, cycle, motif, lflank, rflank)
+              #infile = "%s/%s" % (outdir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'csv']))
+              outfile = "%s/%s" % (outdir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'pdf']))
+              yield {
+                'name'      : outfile,
+                'actions'   : ["seqlogo_scripts/plot_seqlogo.R -i %s -e %s -t %s.%s.%s.%s -o %s" % (infile, enrich, task.family, task.tf, task.primer, motif, outfile)],
+                'file_dep'  : [infile, enrich],
+                'targets'   : [outfile],
+                'clean'     : True,
+              }
+
+def merge_pdfs(infiles, outfile):
+  merger = PdfFileMerger()
+  for pdf in infiles:
+    if sp.check_output('pdfinfo %s | grep Title:' % pdf, shell=True).find("no logo") < 0:
+      print("MERGING %s " % pdf)
+      merger.append(open(pdf, 'rb'))
+    else:
+      print("ignoring %s " % pdf)
+  with open(outfile, 'wb') as fout:
+    merger.write(fout)
+
+def task_combine_seqlogos():
+  for en_th in ['1.20']:
+    for lflank, rflank in flank_configs:
+      for shape_type in ['MGW']:
+        for levels_type in ['publish']:
+          infiles = []
+          for task in task_infos:
+            for motif, dist in izip(task.motifs, task.distances):
+              outdir = '/'.join([top_seqlogo_dir, levels_type, en_th, task.family, task.tf, task.primer])
+              infile = "%s/%s" % (outdir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'csv']))
+              infiles.append("%s/%s" % (outdir, '.'.join(['seqlogo', task.tf, task.primer, shape_type, "allcycles", motif, str(lflank), str(rflank), 'pdf'])))
+          outfile = '%s/fig_seqlogo_enriched_shapemers_%s_%s_th%s.pdf' % (top_results_dir, levels_type, fg_type, en_th)
+          yield {
+            'name'      : outfile,
+            'actions'   : [(merge_pdfs, [infiles, outfile])],
+            'targets'   : [outfile],
+            'file_dep'  : infiles,
+            'clean'     : True,
+          }
 
 def task_get_bg_shapemers_median_ic():
   """ Generate shape mers """

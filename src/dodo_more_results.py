@@ -1,7 +1,7 @@
 from dodo_common import *
 from results_scripts.more_results import *
 
-level_names = {'publish': 'main-text', 'other1': 'alternative'}
+level_names = {'publish': 'main', 'other1': 'alternative'}
 
 
 def task_generate_shape_levels_info():

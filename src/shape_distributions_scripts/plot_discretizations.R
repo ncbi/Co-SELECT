@@ -39,10 +39,12 @@ print(gaussians)
 print(functions)
 
 dis <- read.csv('shape_levels.csv')
-dis <- dis[dis$levels_type == 'publish', c('shape', 'levels')]
+#dis <- dis[dis$levels_type == 'publish', c('shape', 'levels')]
+dis <- dis[dis$levels_type %in% c('publish', 'other1'), c('shape', 'levels', 'levels_type')]
 dis = merge(dis, limits)
 dis$levels = paste(dis$min, dis$levels, dis$max, sep='|')
 print(dis)
+
 
 getCutoffLabelPos <- function(x) {
   x = unlist(strsplit(x, '[|]'))
@@ -53,8 +55,10 @@ getCutoffLabelPos <- function(x) {
   tibble(cutoff = list(vals[2:(n-1)]), label = list(labs), pos = list(pos))
 }
 
+getHeatMap <- function(dis) {
+
 dis <- dis %>% 
-    group_by(shape) %>%
+    group_by(shape, levels_type) %>%
     do(getCutoffLabelPos(.$levels))
 
 # now dis is nested, cannot be unnested because the
@@ -71,10 +75,10 @@ applyFunc <- function(f, x) {
 # unnest cutoffs from dis and also compute the y values
 # of the original density plot at the cutoff levels 
 cutoffs = dis %>%
-    select(shape, cutoff) %>%
+    select(shape, levels_type, cutoff) %>%
     unnest() %>%
     mutate(selected = 'yes') %>%
-    group_by(shape) %>%
+    group_by(shape, levels_type) %>%
     nest() %>%
     inner_join(functions, by='shape') %>%
     mutate(yend = applyFunc(f, data)) %>%
@@ -86,7 +90,183 @@ print(cutoffs)
 
 
 labels <- dis %>% 
-    select(shape, label, pos) %>%
+    select(shape, levels_type, label, pos) %>%
+    unnest() %>%
+    mutate(plot = 'B')
+
+print(labels)
+
+setCutoffSource <- function(x) {
+  lapply(x, function(x) {
+    for (i in 1:nrow(x)) {
+      for (j in 1:nrow(x)) {
+        if ((x$plot[i] == 'B') && (x$plot[j] == 'A')) {
+          if (abs(x$cutoff[i] - x$cutoff[j]) < 0.1) {
+            x$comp[i] = x$comp[j]
+            x$plot[i] = 'AB'
+          }
+        }
+      }
+    }
+    x
+  })
+}
+
+# For a vertical line, it could be either a standard deviate of
+# a component or it is an adhoc cutoff based on intersection / local minima
+# In the first case it has comp = C1, C2 etc and in the second case 
+# it has comp = CX
+
+# Initially we start with all cutoffs but later eliminate those which 
+# have a counterpart in the standard deviates
+
+vlines = gaussians %>%
+    group_by(shape, comp) %>%
+    mutate(cutoff = list(c(mu+sigma, mu-sigma))) %>%
+    mutate(yend = list(lambda*dnorm(c(mu+sigma, mu-sigma), mean=mu, sd=sigma))) %>%
+    unnest(cutoff, yend) %>%
+    select(shape, comp, plot, cutoff, yend) %>%
+    mutate(selected = 'no') %>%
+    bind_rows(cutoffs %>% mutate(comp='CX', plot='B')) %>%
+    group_by(shape) %>%
+    nest() %>%
+    mutate(data = setCutoffSource(data)) %>%
+    unnest()
+
+vlines_A = vlines %>% filter(plot != 'AB') %>% mutate(plot = 'A')
+vlines_B = vlines %>% filter(plot != 'A') %>% mutate(plot = 'B')
+
+df = ddply(df, .(shape), mutate, relden = den/max(den, na.rm=T))
+
+
+
+df$shape = factor(df$shape, levels=shapes)
+top$shape = factor(top$shape, levels=shapes)
+labels$shape = factor(labels$shape, levels=shapes)
+cutoffs$shape = factor(cutoffs$shape, levels=shapes)
+vlines_A$shape = factor(vlines_A$shape, levels=shapes)
+vlines_B$shape = factor(vlines_B$shape, levels=shapes)
+gaussians$shape = factor(gaussians$shape, levels=shapes)
+
+normaldens <- ddply(gaussians, c("shape", "plot", "comp"), function(df) {
+  shape = unique(df$shape)
+  plot = unique(df$plot)
+  comp = unique(df$comp)
+  lim = limits[limits$shape == shape,]
+  x = with(lim, seq(min, max, length = 100))
+  data.frame(
+    x = x, plot = plot, comp = comp,
+    density = df$lambda * dnorm(x, df$mu, df$sigma)
+  )
+})
+
+dots = data.frame(x=c(4.65, 32.04, -9.32, -4.99), y=c(0.22, 0.03, 0.088, 0.058), shape=c('MGW', 'HelT', 'ProT', 'ProT'), plot = 'A')
+
+vlines_B$xval = vlines_B$cutoff
+vlines_B$xval = ifelse(vlines_B$xval == 32.04, 31.75, ifelse(vlines_B$xval == -3.92, -5, vlines_B$xval))
+
+
+print("In getHeatMap")
+print(head(labels))
+labels$levels_type = factor(labels$levels_type, levels=c('publish', 'other1'), labels=c('main', 'alternative'))
+vlines_B$levels_type = factor(vlines_B$levels_type, levels=c('publish', 'other1'), labels=c('main', 'alternative'))
+
+p <- ggplot(df, aes(x)) +
+       #geom_histogram(aes(y = ..density..), color= 'grey', alpha = 0.4, linetype='solid', size = 0.25, fill=NA) +                        
+       #geom_line(data = normaldens, aes(y = density, color= comp), size=0.5, alpha = 0.9) +
+       #geom_segment(data = vlines_A, aes(x = cutoff, y=0, xend = cutoff, yend=yend, color=comp, linetype=selected), size = 0.5, alpha = 0.9) +
+       #geom_line(data = df %>% mutate(plot='A'), aes(y = den, color = 'C0'), size = 0.7, alpha = 0.9) +  
+       geom_raster(data = df, aes(y = y, fill = relden)) +
+       geom_segment(data = vlines_B, aes(x = cutoff, y = -Inf, xend = cutoff, yend = +Inf), color = 'black', alpha = 0.9) +
+       geom_text(data = vlines_B, aes(x = xval, label = cutoff), y=+Inf, vjust = -0.5, family='serif', size=3, color='grey30') +
+       geom_text(data = labels, aes(x = pos, label = label), y=0.025) +
+       #geom_point(data = dots, aes(x=x, y=y), size=3, color='darkviolet') +
+       #facet_wrap(~shape, scale = "free", ncol=2) +
+       #scale_x_continuous(sec.axis = dup_axis(name=NULL, labels=NULL)) +
+       #scale_linetype_manual(values = c('yes'='solid', 'no'='31'),
+       #                      labels = c('yes'='Cutoff', 'no' = 'Standard deviation')) +
+       scale_fill_gradient(low = 'gray', high = 'red') +
+       #scale_color_manual(values = c('C0' = 'red', 'CX' = 'darkviolet', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
+       #                   labels = c('C0' = 'Original density', 'CX' = 'Intersection / local minima',
+       #                              'C1' = 'One Gaussian component', 
+       #                              'C2' = 'Other Gaussian component')) +
+       #labs(x = "Value of a shape feature", y='') +
+       labs(x = "", y='') +
+       theme_tufte() + guides(fill = FALSE, 
+                              linetype = guide_legend(title='', label.hjust=1, order=2),
+                              color=guide_legend(title='', label.hjust=1, order = 1)) +
+       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+       #theme(strip.text.y = element_blank()) +
+       theme(panel.spacing.y = unit(+1.0, "lines")) +
+       theme(panel.border = element_blank()) +
+       #theme(axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
+       theme(axis.line = element_blank()) +
+       # Remove only the legend title
+       theme(legend.position='bottom') +
+       theme(legend.text = element_text(margin = margin(r = 5, unit = "pt"))) +
+       #theme(plot.margin = margin(1, 1, 1, 1, "mm")) +
+       #theme(axis.title.x = element_text(vjust=-4.5))+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+        theme(strip.text.x = element_text(margin = margin(0, 0, 0.75, 0, "cm"), vjust = 0.0, size=11)) +
+        coord_cartesian(clip = 'off')
+}
+
+
+pdf("fig_discretization_both.pdf", width=10, height=3)
+p = getHeatMap(dis)
+p = p + facet_grid(levels_type~shape, scale = 'free')
+print(p)
+
+
+
+dis = dis[dis$levels_type == 'publish',]
+
+pdf("fig_discretization.pdf", width=4, height=3)
+p = getHeatMap(dis)
+p = p + facet_wrap(~shape, scale = "free", ncol=2) +
+       theme(strip.text.y = element_blank())
+
+print(p)
+
+
+getDiscretePlots <- function(dis) {
+
+dis <- dis %>% 
+    group_by(shape, levels_type) %>%
+    do(getCutoffLabelPos(.$levels))
+
+# now dis is nested, cannot be unnested because the
+# numbers of cutoffs and labels are different
+print(dis)
+
+
+applyFunc <- function(f, x) {
+  lapply(seq_along(f), function(n) {
+    do.call(f[[n]], list('v' = x[[n]]$cutoff))
+  })
+}
+
+# unnest cutoffs from dis and also compute the y values
+# of the original density plot at the cutoff levels 
+cutoffs = dis %>%
+    select(shape, levels_type, cutoff) %>%
+    unnest() %>%
+    mutate(selected = 'yes') %>%
+    group_by(shape, levels_type) %>%
+    nest() %>%
+    inner_join(functions, by='shape') %>%
+    mutate(yend = applyFunc(f, data)) %>%
+    select(-f) %>%
+    unnest()
+
+print(cutoffs)
+
+
+
+labels <- dis %>% 
+    select(shape, levels_type, label, pos) %>%
     unnest() %>%
     mutate(plot = 'B')
 
@@ -159,51 +339,10 @@ normaldens <- ddply(gaussians, c("shape", "plot", "comp"), function(df) {
 dots = data.frame(x=c(4.65, 32.04, -9.32, -4.99), y=c(0.22, 0.03, 0.088, 0.058), shape=c('MGW', 'HelT', 'ProT', 'ProT'), plot = 'A')
 
 
-p <- ggplot(df, aes(x)) +
-       #geom_histogram(aes(y = ..density..), color= 'grey', alpha = 0.4, linetype='solid', size = 0.25, fill=NA) +                        
-       #geom_line(data = normaldens, aes(y = density, color= comp), size=0.5, alpha = 0.9) +
-       #geom_segment(data = vlines_A, aes(x = cutoff, y=0, xend = cutoff, yend=yend, color=comp, linetype=selected), size = 0.5, alpha = 0.9) +
-       #geom_line(data = df %>% mutate(plot='A'), aes(y = den, color = 'C0'), size = 0.7, alpha = 0.9) +  
-       geom_raster(data = df, aes(y = y, fill = relden)) +
-       geom_segment(data = vlines_B, aes(x = cutoff, y = -Inf, xend = cutoff, yend = +Inf), color = 'black', alpha = 0.9) +
-       geom_text(data = vlines_B, aes(x = cutoff, label = cutoff), y=+Inf, vjust = -0.5, family='serif', size=3, color='grey30') +
-       geom_text(data = labels, aes(x = pos, label = label), y=0.025) +
-       #geom_point(data = dots, aes(x=x, y=y), size=3, color='darkviolet') +
-       facet_wrap(~shape, scale = "free", ncol=2) +
-       #scale_x_continuous(sec.axis = dup_axis(name=NULL, labels=NULL)) +
-       #scale_linetype_manual(values = c('yes'='solid', 'no'='31'),
-       #                      labels = c('yes'='Cutoff', 'no' = 'Standard deviation')) +
-       scale_fill_gradient(low = 'gray', high = 'red') +
-       #scale_color_manual(values = c('C0' = 'red', 'CX' = 'darkviolet', 'C1' = 'darkgreen', 'C2' = 'blue', 'C3' = 'brown'),
-       #                   labels = c('C0' = 'Original density', 'CX' = 'Intersection / local minima',
-       #                              'C1' = 'One Gaussian component', 
-       #                              'C2' = 'Other Gaussian component')) +
-       #labs(x = "Value of a shape feature", y='') +
-       labs(x = "", y='') +
-       theme_tufte() + guides(fill = FALSE, 
-                              linetype = guide_legend(title='', label.hjust=1, order=2),
-                              color=guide_legend(title='', label.hjust=1, order = 1)) +
-       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-       theme(strip.text.y = element_blank()) +
-       theme(panel.spacing.y = unit(+1.5, "lines")) +
-       theme(panel.border = element_blank()) +
-       #theme(axis.line = element_line(size = 0.5, linetype = "solid", colour = "black")) +
-       theme(axis.line = element_blank()) +
-       # Remove only the legend title
-       theme(legend.position='bottom') +
-       theme(legend.text = element_text(margin = margin(r = 5, unit = "pt"))) +
-       #theme(plot.margin = margin(1, 1, 1, 1, "mm")) +
-       #theme(axis.title.x = element_text(vjust=-4.5))+
-  theme(axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y=element_blank()) +
-        theme(strip.text.x = element_text(margin = margin(0, 0, 0.75, 0, "cm"), vjust = 0.0, size = 12)) +
-        coord_cartesian(clip = 'off')
-
-
-pdf("fig_discretization.pdf", width=8, height=5)
-print(p)
-
+print("In getHeatMap")
+print(head(labels))
+labels$levels_type = factor(labels$levels_type, levels=c('publish', 'other1'), labels=c('main', 'alternative'))
+vlines_B$levels_type = factor(vlines_B$levels_type, levels=c('publish', 'other1'), labels=c('main', 'alternative'))
 
 
 p <- ggplot(top, aes(x)) +
@@ -239,9 +378,12 @@ p <- ggplot(top, aes(x)) +
        theme(legend.text = element_text(margin = margin(r = 5, unit = "pt"))) +
        theme(plot.margin = margin(1, 1, 0, 1, "mm")) +
        theme(axis.title.x = element_text(vjust=-4.5)) 
+}
 
 
 pdf("fig_discretization_detailed.pdf", width=10, height=4)
+
+p = getDiscretePlots(dis)
 
 gt = ggplot_gtable(ggplot_build(p))
 

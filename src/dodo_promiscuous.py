@@ -3,7 +3,7 @@ from doit.tools import run_once
 
 en_thresholds = ["1.10", "1.20"]
 discrete_levels_type = ["publish", "other1"]
-levels_names = {'publish': 'main-text', 'other1': 'alternative'}
+levels_names = {'publish': 'main', 'other1': 'alternative'}
 
 print en_thresholds
 
