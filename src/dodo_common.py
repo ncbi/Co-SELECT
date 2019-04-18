@@ -1,6 +1,7 @@
-import sys
-import os, re
+import sys, os, re
 import pandas as pd
+import subprocess as sp
+from PyPDF2 import PdfFileMerger
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)))
 
@@ -39,10 +40,104 @@ for cycle in cycles:
   tfs['accessions'] = tfs['accessions'] + ',' + tfs['cycle'].map(lambda x:str(x)) + ':' + tfs.merge(accession)['accession']
 tfs['accessions'] = tfs['accessions'].map(lambda x: {int(y.split(':')[0]):y.split(':')[1] for y in x.split(',')[1:]})
 
-print tfs
 
 motif_dist = tfs[['motif', 'distance']].drop_duplicates()
 motifs = motif_dist['motif'].tolist()
 distances = motif_dist['distance'].tolist()
 
+
+def combine_csvs(configs, outfile):
+  index_cols = list(set(configs.columns) - set(['infile']))
+  df = pd.DataFrame()
+  for indx, r in configs.iterrows():
+    tmp = pd.read_csv(r['infile'])
+    for col in index_cols:
+      tmp[col] = r[col]
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def merge_pdfs(infiles, outfile):
+  merger = PdfFileMerger()
+  for pdf in infiles:
+    merger.append(open(pdf, 'rb'))
+  with open(outfile, 'wb') as fout:
+    merger.write(fout)
+
+
+def merge_pdfs_exclude_empty(infiles, outfile):
+  keepfiles = filter(lambda x: sp.check_output('pdfinfo %s | grep Title:' % x, shell=True).find("no logo") < 0, infiles)
+  merge_pdfs(keepfiles, outfile)
+
+
+def merge_pdfs_from_list(inlist, outfile):
+  infiles = pd.read_csv(inlist)['pdf']
+  merge_pdfs(infiles, outfile)
+
+
+def combine_data_frames(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (tf1, primer1, family1, tf2, primer2, family2) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['tf.x'] = tf1
+    tmp['primer.x'] = primer1
+    tmp['family.x'] = family1
+    tmp['tf.y'] = tf2
+    tmp['primer.y'] = primer2
+    tmp['family.y'] = family2
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def combine_qvalues(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (en_th, shape_type, levels_type, family, ctx) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['en_th'] = en_th
+    tmp['shape'] = shape_type
+    tmp['levels_type'] = levels_type
+    tmp['family'] = family
+    tmp['ctx'] = ctx
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def combine_enriched(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (en_th, shape_type) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['en_th'] = en_th
+    tmp['shape'] = shape_type
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def combine_detailed_results(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (en_th, shape_type) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['en_th'] = en_th
+    tmp['shape'] = shape_type
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def combine_detailed_results2(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, ltype in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['discretization'] = ltype
+    df = df.append(tmp, ignore_index=True)
+  df.to_csv(outfile, index=False)
+
+
+def combine_data_frames_th_shape(infiles, infos, outfile):
+  df = pd.DataFrame()
+  for infile, (en_th, shape_type) in izip(infiles, infos):
+    tmp = pd.read_csv(infile)
+    tmp['en_th'] = en_th
+    tmp['shape'] = shape_type
+    df = df.append(tmp, ignore_index=True)
+  print df
+  df.to_csv(outfile, index=False)
 

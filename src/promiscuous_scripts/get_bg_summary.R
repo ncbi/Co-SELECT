@@ -7,19 +7,23 @@ suppressPackageStartupMessages(library("optparse"))
 source("results_scripts/tf_utils.R")
 #source("params_config.R")
 
-top_data_dir <- '/panfs/pan1/aptax/FinalData'
-top_prob_dir <- '/panfs/pan1/aptax/FinalData/simple_predict'
-top_res_dir <- '/panfs/pan1/dnashape/FinalResults/d0/publish/1.20'
+top_data_dir <- '../data'
+top_prob_dir <- '../data/simple_predict'
+top_res_dir <- '../results/d0/publish/1.20'
 
 lflank <- 1
 rflank <- 1
 cycle <- 4
 shape_type <- 'MGW'
 
+outfile <- paste(top_res_dir, paste0("bg_summary_", shape_type, ".csv"), sep='/')
+print(outfile)
 
 option_list <- list( 
     make_option(c('-s', "--shape"), default="MGW", 
-        help = "Shape feature to use [default \"%default\"]")
+        help = "Shape feature to use [default \"%default\"]"),
+    make_option(c('-o', "--outfile"), default=outfile, 
+        help = "Output file [default \"%default\"]")
     )
 
 # get command line options, if help option encountered print help and exit,
@@ -27,7 +31,10 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 shape_type = opt$shape
+outfile = opt$outfile
 
+print(shape_type)
+print(outfile)
 
 shape_levels <- fread('shape_levels.csv')[shape == shape_type & levels_type == 'publish', levels_str]
 print(shape_levels)
@@ -65,7 +72,6 @@ tfs <- rbindlist(lapply(1:nrow(tfs), function(x) { getData(top_data_dir, top_pro
 print(head(tfs))
 print(nrow(tfs))
 
-data_file <- paste(top_res_dir, paste0("bg_summary_", shape_type, ".csv"), sep='/')
 
-fwrite(tfs, data_file)
+fwrite(tfs, outfile)
 

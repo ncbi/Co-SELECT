@@ -16,11 +16,10 @@ def save_dataframe(writer, sheet, df):
   writer.sheets[sheet].freeze_panes(df.columns.nlevels+1, df.index.nlevels)
 
 
-#def get_enriched_shapemers_in_excel(infile, motif_file, xlsfile, csvfile):
-def get_enriched_shapemers_in_excel(combined, motif_file, xlsfile, csvfile):
+def get_enriched_shapemers_in_excel(infile, motif_file, xlsfile, csvfile):
   writer = pd.ExcelWriter(xlsfile, engine='xlsxwriter')
   tf_motif = pd.read_csv(motif_file)
-  #combined = pd.read_csv(infile)
+  combined = pd.read_csv(infile)
   shapes = combined['shape'].drop_duplicates()
   combined = combined[['family.x', 'tf.x', 'primer.x', 'kmer', 'label', 'en_th', 'shape']]
   combined = combined[combined['label'].isin(['both','bg'])]
@@ -40,6 +39,26 @@ def get_enriched_shapemers_in_excel(combined, motif_file, xlsfile, csvfile):
       save_dataframe(writer, sheet, res_pitx3)
   writer.save()
 
+
+def get_enriched_shapemers_in_dataframe(combined, motif_file):
+  tf_motif = pd.read_csv(motif_file)
+  combined = combined[['family.x', 'tf.x', 'primer.x', 'kmer', 'label', 'shape']]
+  combined['label'] = combined['label'].apply(lambda x: 'X' if x == 'both' else 'o')
+  combined = combined.rename(index=str, columns={"family.x": "family", "primer.x": "primer", "tf.x": "tf", "kmer": "shapemer"})
+  combined = combined.merge(tf_motif)
+  combined = combined.rename(index=str, columns={"primer": "barcode"})
+  tmp = combined[['tf', 'barcode']].drop_duplicates()
+  tmp['exp'] = tmp.groupby('tf')['barcode'].transform(lambda x: [y+1 for y in range(len(x))] if (len(x) > 1) else [0])
+  print tmp
+  combined = combined.merge(tmp)
+  print combined
+  combined['tf'] = combined.apply(lambda x: "{} ({})".format(x['tf'], x['exp']) if x['exp'] else x['tf'], axis='columns')
+  print combined
+  print combined[combined['exp'] == 2]
+  combined = combined.drop(['barcode', 'exp'], axis='columns')
+  combined = combined.set_index(['family', 'tf', 'motif', 'shapemer','shape'])
+  combined = combined.unstack().unstack()
+  return(combined)
 
 
 def get_detailed_results_in_excel(infile, motif_file, outfile, rename_dict):

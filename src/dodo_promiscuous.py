@@ -4,6 +4,7 @@ from doit.tools import run_once
 en_thresholds = ["1.10", "1.20"]
 discrete_levels_type = ["publish", "other1"]
 levels_names = {'publish': 'main', 'other1': 'alternative'}
+cycles = [4]
 
 print en_thresholds
 
@@ -13,21 +14,8 @@ def write_tfs_per_family(tfs, outfile):
   tmp['num_tfs'] = tmp['tf']
   tmp[['num_tfs']].to_csv(outfile, index=True) # [[]] needed for saving the column names
   
-
-
-def combine_data_frames(infiles, infos, outfile):
-  df = pd.DataFrame()
-  for infile, (en_th, shape_type) in izip(infiles, infos):
-    tmp = pd.read_csv(infile)
-    tmp['en_th'] = en_th
-    tmp['shape'] = shape_type
-    df = df.append(tmp, ignore_index=True)
-  print df
-  df.to_csv(outfile, index=False)
-
-
-
 def task_count_per_family():
+  """Count the number of TF experiments per family"""
   output = '%s/tfs_per_family.csv' % (top_results_dir) 
   yield {
     'name'      : output,
@@ -39,7 +27,7 @@ def task_count_per_family():
   
 
 def task_detect_promiscuous():
-  """ Get summary information for enrichment """
+  """Compute promiscuity of shapemers in the motif-free (bg) pool"""
   tfs_per_family_file = '%s/tfs_per_family.csv' % (top_results_dir) 
   for en_th in en_thresholds:
     for shape_type in shapes:
@@ -57,7 +45,7 @@ def task_detect_promiscuous():
             }
 
 def task_combine_promiscuous():
-  """ Get summary information for enrichment """
+  """Combine promiscuity data in a single table"""
   for levels_type in discrete_levels_type:
     for lflank, rflank in flank_configs:
       for cycle in cycles:
@@ -66,7 +54,7 @@ def task_combine_promiscuous():
         output = '%s/promiscuous_%s_cycle%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
         yield {
           'name'      : output,
-          'actions'   : [(combine_data_frames, [infiles, infos, output])],
+          'actions'   : [(combine_data_frames_th_shape, [infiles, infos, output])],
           'file_dep'  : infiles,
           'targets'   : [output],
           'clean'     : True,
@@ -74,6 +62,7 @@ def task_combine_promiscuous():
 
 
 def task_plot_promiscuous():
+  """Plot promiscuity of shapemers"""
   for levels_type in discrete_levels_type:
     for lflank, rflank in flank_configs:
       for cycle in cycles:

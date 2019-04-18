@@ -2,6 +2,7 @@
 suppressMessages(require(optparse))
 suppressMessages(require(cowplot))
 source("seqlogo_scripts/common_funcs.R")
+source("results_scripts/plot_pca_func.R")
 library(ggthemes)
 library(gtable)
 library(ggrepel)
@@ -243,87 +244,10 @@ getNmrPlot <- function() {
   p <- plot_grid(p2, p1, labels = c("A", "B"), ncol=1)
 }
 
-getPCAplot <- function(show_labels=TRUE) {
 
 pca_csv = '../results/d0/pca_shapemers_publish.cycle4.l1.r1.csv'
-
 pca <- read.csv(pca_csv, stringsAsFactors=F)
 pca$label <- ifelse((pca$tf %in% c('PITX3', 'HMX2')) & (pca$barcode %in% c('TGCATC20NGA', 'TAGTGG20NCG')), pca$tf, '')
-
-delta <- 0.1
-ymax <- max(pca$pca.two) + delta
-ymin <- min(pca$pca.two) - delta
-
-
-# Create dummy variables 
-bhlh <- unique(pca[pca$family=='bHLH', c('subcategory', 'family')])
-ets <- unique(pca[pca$family=='ETS', c('subcategory', 'family')])
-homeodomain <- unique(pca[pca$family=='homeodomain', c('subcategory', 'family')])
-
-
-mycolors = read.csv(text="serial,subcategory,color,family
-8,TAAA,#00BFC4,homeodomain
-7,TAAT,#00B0F6,homeodomain
-9,Other,#9590FF,homeodomain
-4,CGGAA,#A3A500,ETS
-5,GGAAG,#39B600,ETS
-;6,Other,#00BF7D,ETS
-1,CACGTG,#F8766D,bHLH
-2,CATATG,#D89000,bHLH
-3,Other,#E76BF3,bHLH", comment.char=';', stringsAsFactors=F)
-
-mycolors = mycolors[order(mycolors$serial),]
-
-homeodomain$subcategory[homeodomain$subcategory=='TAAA'] <- 'TAAA\n(mostly\n Hox)'
-pca$subcategory[pca$subcategory=='TAAA'] <- 'TAAA\n(mostly\n Hox)'
-mycolors$subcategory[mycolors$subcategory=='TAAA'] <- 'TAAA\n(mostly\n Hox)'
-
-bhlh$subcategory = factor(bhlh$subcategory, levels=mycolors$subcategory[mycolors$family=='bHLH'], ordered=T)
-homeodomain$subcategory = factor(homeodomain$subcategory, levels=mycolors$subcategory[mycolors$family=='homeodomain'], ordered=T)
-ets$subcategory = factor(ets$subcategory, levels=mycolors$subcategory[mycolors$family=='ETS'], ordered=T)
-
-
-print(bhlh)
-print(ets)
-print(homeodomain)
-
-pca$category = paste(pca$subcategory, pca$family, sep='.')
-mycolors$category = paste(mycolors$subcategory, mycolors$family, sep='.')
-print(pca)
-
-## Create plot
-p <- ggplot() + 
-## Plot the four dummy layer outside of the intended plotting area  
-  geom_point(data = ets, aes(x = 0, y = ymax+1, shape = subcategory)) + 
-  geom_point(data = homeodomain, aes(x = 0, y = ymax+1,fill = subcategory)) +
-  geom_line(data = bhlh, aes(x = 0, y = ymax+1, linetype = subcategory)) +
-## Add in your real plot goal  
-  #geom_bar(data = services, aes(category, fill=subcategory)) +
-  geom_point(data = pca, aes(x=pca.one, y=pca.two, color=category), size = 4, alpha = 0.8) +
-## Remove the Fill legend  
-  #scale_fill_hue(guide="none") +
-  scale_alpha(guide="none") +
-  scale_size(guide="none") +
-  scale_color_manual(guide="none", values=setNames(mycolors$color, mycolors$category)) +
-## Override the guide aesthetics to make them look like fill colors  
-  guides(shape = guide_legend(order=2, override.aes = list(colour = mycolors$color[mycolors$family=='ETS'], fill = NA, shape = 15, size = 7),title="ETS", label.theme=element_text(family='mono')),
-         linetype = guide_legend(order=1, override.aes = list(colour = mycolors$color[mycolors$family=='bHLH'], shape = 15, size = 7),title = "bHLH", label.theme=element_text(family='mono')),
-         fill = guide_legend(order=3, override.aes = list(colour = mycolors$color[mycolors$family=='homeodomain'], shape = 15,size = 7), title = "homeodomain", label.theme=element_text(family='mono', lineheight=0.75))) +
-## Adjust the plot range to hide all the extra layers  
-  ylim(ymin,ymax) +
-  theme_few() +
-  labs(x="PCA dimension 1",
-       y="PCA dimension 2",
-       title="Clustering of TF Experiments by PCA of Shapemers Enriched in Motif-free Aptamers") 
-#> Warning: Removed 3 rows containing missing values (geom_point).
-#> Warning: Removed 2 rows containing missing values (geom_point).
-#> Warning: Removed 3 rows containing missing values (geom_point).
-#> geom_path: Each group consist of only one observation. Do you need to adjust the group aesthetic?
-if (show_labels) {
-  p <- p + geom_text_repel(data = pca, aes(x=pca.one, y=pca.two, label=label), size = 4, force = 6) 
-}
-  p
-}
 
 
 
@@ -331,7 +255,7 @@ p1 <- getNmrPlot()
 p2 <- getLogos()
 p3 <- plot_grid(p1, p2, labels = c('', 'C'), ncol=2, rel_widths = c(2,3.5))
 
-p4 <- getPCAplot()
+p4 <- getPCAplot(pca)
 
 p <- plot_grid(p3, p4, labels = c('', 'D'), ncol=1, rel_heights = c(3,2.5))
 
@@ -343,7 +267,7 @@ print(p3)
 
 
 pdf('fig_pca.pdf', width=8, height = 5)
-p5 <- getPCAplot(FALSE)
+p5 <- getPCAplot(pca,FALSE)
 print(p5)
 
 quit()

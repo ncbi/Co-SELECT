@@ -5,6 +5,7 @@ level_names = {'publish': 'main', 'other1': 'alternative'}
 
 
 def task_generate_shape_levels_info():
+  """Generate nice strings showing cutoffs and labels of discretized shape values"""
   shape_levels_file = '%s/shape_levels.csv' % (top_results_dir)
   infile = 'analysis_scripts/shape_info.py'
   yield {
@@ -15,9 +16,8 @@ def task_generate_shape_levels_info():
     'clean'     : True,
   }
 
-
-
 def task_plot_qvalues():
+  """Plot histogram of multiple testing corrected P-values"""
   for lflank, rflank in flank_configs:
     for cycle in cycles:
       infile = '%s/dqvalue.%d.l%d.r%d.csv' % (top_results_dir, cycle, lflank, rflank)
@@ -27,15 +27,16 @@ def task_plot_qvalues():
       combined_pdf = '%s/fig_qvalue_combined_family_cycle%d_%s.pdf' % (top_results_dir, cycle, fg_type)
       yield {
         'name'      : selected_pdf,
-        'actions'   : ["results_scripts/plot_qvalue.R %s %s %s %s %s" % (infile, shape_levels_file, selected_pdf, separate_pdf, combined_pdf)],
+        'actions'   : ["results_scripts/plot_qvalue.R %s %s %s %s %s" % (infile,
+            shape_levels_file, selected_pdf, separate_pdf, combined_pdf)],
         'file_dep'  : [infile, shape_levels_file],
         'targets'   : [selected_pdf, separate_pdf, combined_pdf],
         'clean'     : True,
       }
 
-
-
 def task_get_fdr_table():
+  """Generate the main results table showing significant TF experiments at given
+  FDR and enrichment thresholds"""
   for lflank, rflank in flank_configs:
     for cycle in cycles:
       infile = '%s/dqvalue.%d.l%d.r%d.csv' % (top_results_dir, cycle, lflank, rflank)
@@ -49,22 +50,14 @@ def task_get_fdr_table():
         'clean'     : True,
       }
 
-
-def combine_enriched(infiles, infos, outfile):
-  df = pd.DataFrame()
-  for infile, (en_th, shape_type) in izip(infiles, infos):
-    tmp = pd.read_csv(infile)
-    tmp['en_th'] = en_th
-    tmp['shape'] = shape_type
-    df = df.append(tmp, ignore_index=True)
-  df.to_csv(outfile, index=False)
-
-
 def task_combine_all_enriched_shapemers():
+  """Generate a table in CSV format for all enriched shapemers"""
   for lflank, rflank in flank_configs:
     for levels_type in discrete_levels_type:
       for cycle in cycles:
-        infiles = ["%s/%s/%s/denriched_same.%s.%d.l%d.r%d.csv" % (top_results_dir, levels_type, en_th, shape_type, cycle, lflank, rflank) for en_th in en_thresholds for shape_type in shapes]
+        infiles = ["%s/%s/%s/denriched_same.%s.%d.l%d.r%d.csv" % (top_results_dir,
+            levels_type, en_th, shape_type, cycle, lflank, rflank)
+                for en_th in en_thresholds for shape_type in shapes]
         infos = [(en_th, shape_type)  for en_th in en_thresholds for shape_type in shapes]
         outfile = '%s/%s/denriched_same.%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
         yield {
@@ -77,6 +70,7 @@ def task_combine_all_enriched_shapemers():
 
 
 def task_get_enriched_shapemers_in_excel():
+  """Generate a table in MS-EXCEL format for all enriched shapemers"""
   for lflank, rflank in flank_configs:
     for ltype in discrete_levels_type:
       for cycle in cycles:
@@ -91,31 +85,15 @@ def task_get_enriched_shapemers_in_excel():
           'clean'     : True,
         }
 
-
-def combine_detailed_results(infiles, infos, outfile):
-  df = pd.DataFrame()
-  for infile, (en_th, shape_type) in izip(infiles, infos):
-    tmp = pd.read_csv(infile)
-    tmp['en_th'] = en_th
-    tmp['shape'] = shape_type
-    df = df.append(tmp, ignore_index=True)
-  df.to_csv(outfile, index=False)
-
-def combine_detailed_results2(infiles, infos, outfile):
-  df = pd.DataFrame()
-  for infile, ltype in izip(infiles, infos):
-    tmp = pd.read_csv(infile)
-    tmp['discretization'] = ltype
-    df = df.append(tmp, ignore_index=True)
-  df.to_csv(outfile, index=False)
-
-
 def task_combine_detailed_results():
+  """Generate a table in CSV format showing the details of Fisher's test"""
   for lflank, rflank in flank_configs:
     for cycle in cycles:
       to_combine = []
       for levels_type in discrete_levels_type:
-        infiles = ["%s/%s/%s/dfisher_same.%s.%d.l%d.r%d.csv" % (top_results_dir, levels_type, en_th, shape_type, cycle, lflank, rflank) for en_th in en_thresholds for shape_type in shapes]
+        infiles = ["%s/%s/%s/dfisher_same.%s.%d.l%d.r%d.csv" % (top_results_dir,
+            levels_type, en_th, shape_type, cycle, lflank, rflank)
+                for en_th in en_thresholds for shape_type in shapes]
         infos = [(en_th, shape_type) for en_th in en_thresholds for shape_type in shapes]
         outfile = '%s/%s/dfisher_same.%d.l%d.r%d.csv' % (top_results_dir, levels_type, cycle, lflank, rflank)
         to_combine.append(outfile)
@@ -137,6 +115,7 @@ def task_combine_detailed_results():
 
 
 def task_get_detailed_results_in_excel():
+  """Generate a table in MS-EXCEL format showing the details of Fisher's test"""
   for lflank, rflank in flank_configs:
     for cycle in cycles:
       infile = '%s/dfisher_same.%d.l%d.r%d.csv' % (top_results_dir, cycle, lflank, rflank)
@@ -151,6 +130,7 @@ def task_get_detailed_results_in_excel():
 
 
 def task_cluster_by_enriched_shapemers():
+  """Do PCA of enriched shapemers in the motif-free pool (bg) and plot heatmap"""
   for levels_type in discrete_levels_type:
     for lflank, rflank in flank_configs:
       for cycle in cycles:
