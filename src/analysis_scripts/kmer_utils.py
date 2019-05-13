@@ -1,4 +1,4 @@
-from itertools import groupby, izip, product
+from itertools import groupby, product
 
 def fasta_iter(fasta_name, sep=''):
     """
@@ -44,7 +44,7 @@ def filterFasta(full, part, sep):
 def shape_count_iter(shape, shape_file, count_file):
   sep = ','
   with open(count_file) as g:
-    for (header, seq), cnt in izip(fasta_iter(shape_file, sep), g):
+    for (header, seq), cnt in zip(fasta_iter(shape_file, sep), g):
       yield shape.encodeList(seq.split(sep)), int(cnt)
 
  
@@ -57,19 +57,19 @@ def shape_iter(shape, shape_file):
 def shape_continuous_count_iter(shape_file, count_file):
   sep = ','
   with open(count_file) as g:
-    for (header, seq), cnt in izip(fasta_iter(shape_file, sep), g):
+    for (header, seq), cnt in zip(fasta_iter(shape_file, sep), g):
       yield header, seq, int(cnt)
 
 def filter_shape_continuous_count_iter(shape_file, count_file, filter_file):
   sep = ','
-  for (header, seq), (i, cnt) in izip(filterFasta(shape_file, filter_file, sep), filterSeq(count_file, filter_file)):
+  for (header, seq), (i, cnt) in zip(filterFasta(shape_file, filter_file, sep), filterSeq(count_file, filter_file)):
     assert(int(header) == i+1)
     yield header, seq, int(cnt)
 
 
 def filter_shape_count_iter(shape, shape_file, count_file, filter_file):
   sep = ','
-  for (header, seq), (i, cnt) in izip(filterFasta(shape_file, filter_file, sep), filterSeq(count_file, filter_file)):
+  for (header, seq), (i, cnt) in zip(filterFasta(shape_file, filter_file, sep), filterSeq(count_file, filter_file)):
     assert(int(header) == i+1)
     yield header, shape.encodeList(seq.split(sep)), int(cnt)
 

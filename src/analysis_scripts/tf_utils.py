@@ -1,5 +1,4 @@
 from subprocess import Popen, PIPE
-from itertools import izip
 from re import finditer
 import os, re
 
@@ -18,7 +17,7 @@ def rev_comp(s):
     elif (z == 'C'): t[i] = 'G'
     elif (z == 'G'): t[i] = 'C'
     elif (z == 'T'): t[i] = 'A'
-    else: print "Unknown base", z; exit(0)
+    else: print("Unknown base:", z); exit(0)
   return ''.join(t)
 
 def rev_comp_list(s):
@@ -99,7 +98,7 @@ def unzip_seq_filter_N_old(in_file, seq_file, count_file):
   p = Popen(["zcat", in_file], stdout=PIPE)
   counts = {}
   with  p.stdout as f:
-    for l1, l2, l3, l4 in izip(f,f,f,f):
+    for l1, l2, l3, l4 in zip(f,f,f,f):
       s = l2.rstrip()
       if (s.find('N') < 0): # doesnot have N
         try:
@@ -108,19 +107,19 @@ def unzip_seq_filter_N_old(in_file, seq_file, count_file):
           counts[s] = 1
   with open(seq_file, "w") as g, open(count_file, "w") as h:
     for s,c in sorted(counts.items(), key=lambda x: (x[1],x[0]), reverse=True):
-        print >>g, s
-        print >>h, c
+        print(s, file=g)
+        print(c, file=h)
 
 def unzip_seq_filter_N(barcode, in_file, seq_file, count_file):
   res = re.match('([ACGT]+)\d+N([ACGT]+)', barcode)
   left = res.group(1)
   right = res.group(2)
-  print left, right
+  print(left, right)
   p = Popen(["zcat", in_file], stdout=PIPE)
   counts = {}
   with  p.stdout as f:
-    for l1, l2, l3, l4 in izip(f,f,f,f):
-      s = l2.rstrip()
+    for l1, l2, l3, l4 in zip(f,f,f,f):
+      s = l2.rstrip().decode()
       if (s.find('N') < 0): # doesnot have N
         try:
           counts[s] += 1
@@ -128,6 +127,6 @@ def unzip_seq_filter_N(barcode, in_file, seq_file, count_file):
           counts[s] = 1
   with open(seq_file, "w") as g, open(count_file, "w") as h:
     for s,c in sorted(counts.items(), key=lambda x: (x[1],x[0]), reverse=True):
-        print >>g, ''.join([left, s, right])
-        print >>h, c
+        print(''.join([left, s, right]), file=g)
+        print(c, file=h)
 
